@@ -7,6 +7,7 @@ import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Todos } from './pages/Todos'
+import { ApiKeys } from './pages/ApiKeys'
 import './index.css'
 
 function Navbar() {
@@ -19,9 +20,14 @@ function Navbar() {
           <Button variant="ghost" size="sm">Home</Button>
         </Link>
         {user && (
-          <Link to="/todos">
-            <Button variant="ghost" size="sm">Todos</Button>
-          </Link>
+          <>
+            <Link to="/todos">
+              <Button variant="ghost" size="sm">Todos</Button>
+            </Link>
+            <Link to="/api-keys">
+              <Button variant="ghost" size="sm">API Keys</Button>
+            </Link>
+          </>
         )}
       </div>
       <div className="flex items-center gap-2">
@@ -79,6 +85,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Todos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/api-keys"
+            element={
+              <ProtectedRoute>
+                <ApiKeys />
               </ProtectedRoute>
             }
           />
