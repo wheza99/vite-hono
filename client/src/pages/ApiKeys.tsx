@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Copy, Check, Trash2, TriangleAlert } from 'lucide-react'
+import { Separator } from '@/components/ui/separator'
 
 interface ApiKey {
   id: string
@@ -180,30 +181,38 @@ export function ApiKeys() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nama</TableHead>
-                <TableHead>Key</TableHead>
-                <TableHead>Dibuat</TableHead>
-                <TableHead>Terakhir Digunakan</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
+                <TableHead className="pl-8 w-1/5">Nama</TableHead>
+                <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                <TableHead className="w-1/5">Key</TableHead>
+                <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                <TableHead className="w-1/5">Dibuat</TableHead>
+                <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                <TableHead className="w-1/5">Terakhir Digunakan</TableHead>
+                <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                <TableHead className="w-1/5"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {keys.map((key) => (
                 <TableRow key={key.id}>
-                  <TableCell className="font-medium">{key.name}</TableCell>
+                  <TableCell className="pl-8 font-medium">{key.name}</TableCell>
+                  <TableCell></TableCell>
                   <TableCell>
                     <code className="rounded bg-muted px-2 py-1 text-xs font-mono">
                       {key.keyPrefix}...{key.keySuffix}
                     </code>
                   </TableCell>
+                  <TableCell></TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(key.createdAt).toLocaleDateString('id-ID')}
                   </TableCell>
+                  <TableCell></TableCell>
                   <TableCell className="text-muted-foreground">
                     {key.lastUsedAt
                       ? new Date(key.lastUsedAt).toLocaleDateString('id-ID')
                       : '-'}
                   </TableCell>
+                  <TableCell></TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"

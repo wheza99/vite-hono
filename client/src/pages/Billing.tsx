@@ -11,6 +11,7 @@ import {
   PlusCircle,
   Loader2,
 } from 'lucide-react'
+import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Table,
@@ -172,31 +173,21 @@ export function Billing() {
   }
 
   const getPaymentAction = (payment: Payment) => {
-    if (payment.status === 'void' || payment.status === 'expired') {
-      return (
-        <Button size="sm" variant="outline" disabled={!payment.url} onClick={() => payment.url && window.open(payment.url, '_blank')}>
-          <ExternalLink className="w-4 h-4 mr-1" />
-          Details
-        </Button>
-      )
-    }
     if (payment.status === 'open') {
       return (
         <div className="flex gap-1">
-          <Button size="sm" disabled={!payment.url} onClick={() => payment.url && window.open(payment.url, '_blank')}>
-            <CreditCard className="w-4 h-4 mr-1" />
-            Bayar
+          <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!payment.url} onClick={() => payment.url && window.open(payment.url, '_blank')}>
+            <ExternalLink className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => checkStatus(payment.id)} disabled={checkingId === payment.id}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => checkStatus(payment.id)} disabled={checkingId === payment.id}>
             <RefreshCw className={`h-4 w-4 ${checkingId === payment.id ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       )
     }
     return (
-      <Button size="sm" disabled={!payment.url} onClick={() => payment.url && window.open(payment.url, '_blank')}>
-        <Receipt className="w-4 h-4 mr-1" />
-        Receipt
+      <Button variant="ghost" size="icon" className="h-8 w-8" disabled={!payment.url} onClick={() => payment.url && window.open(payment.url, '_blank')}>
+        <ExternalLink className="h-4 w-4" />
       </Button>
     )
   }
@@ -307,31 +298,37 @@ export function Billing() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Jumlah</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                    <TableHead className="pl-8 w-1/4">Tanggal</TableHead>
+                    <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                    <TableHead className="w-1/4">Jumlah</TableHead>
+                    <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                    <TableHead className="w-1/4">Status</TableHead>
+                    <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                    <TableHead className="w-1/4">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {payments.map((payment) => (
                     <TableRow key={payment.id}>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="pl-8 text-muted-foreground">
                         {new Date(payment.created_at).toLocaleDateString('id-ID', {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',
                         })}
                       </TableCell>
+                      <TableCell></TableCell>
                       <TableCell className="font-medium">
                         {formatRupiah(payment.amount)}
                       </TableCell>
+                      <TableCell></TableCell>
                       <TableCell>
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusStyle[payment.status] || 'bg-gray-100 text-gray-700'}`}>
                           {statusLabel[payment.status] || payment.status}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell></TableCell>
+                      <TableCell>
                         {getPaymentAction(payment)}
                       </TableCell>
                     </TableRow>
@@ -355,22 +352,26 @@ export function Billing() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Deskripsi</TableHead>
-                    <TableHead>Jumlah</TableHead>
+                    <TableHead className="pl-8 w-1/3">Tanggal</TableHead>
+                    <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                    <TableHead className="w-1/3">Deskripsi</TableHead>
+                    <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                    <TableHead className="w-1/3">Jumlah</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.map((tx) => (
                     <TableRow key={tx.id}>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="pl-8 text-muted-foreground">
                         {new Date(tx.created_at).toLocaleDateString('id-ID', {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',
                         })}
                       </TableCell>
+                      <TableCell></TableCell>
                       <TableCell className="font-medium">{tx.description}</TableCell>
+                      <TableCell></TableCell>
                       <TableCell className={tx.type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}>
                         {tx.type === 'credit' ? '+' : '-'} {formatRupiah(tx.amount)}
                       </TableCell>

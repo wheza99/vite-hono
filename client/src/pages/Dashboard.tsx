@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Trash2 } from 'lucide-react'
+import { Separator } from '@/components/ui/separator'
 
 interface Todo {
   id: number
@@ -137,34 +138,35 @@ export function Dashboard() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">Status</TableHead>
-                <TableHead>Todo</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
+                <TableHead className="w-3/4">Todo</TableHead>
+                <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                <TableHead className="w-1/4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {todos.map((todo) => (
                 <TableRow key={todo.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={todo.done}
-                      onCheckedChange={() => toggleTodo(todo.id, todo.done)}
-                    />
-                  </TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium">
                     <span className={todo.done ? 'line-through text-muted-foreground' : ''}>
                       {todo.text}
                     </span>
                   </TableCell>
+                  <TableCell></TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => deleteTodo(todo.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-start gap-1">
+                      <Checkbox
+                        checked={todo.done}
+                        onCheckedChange={() => toggleTodo(todo.id, todo.done)}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => deleteTodo(todo.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
