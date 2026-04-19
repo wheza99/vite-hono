@@ -76,19 +76,19 @@ vite-hono/
 
 ## API Endpoints
 
-| Method | Path | Auth | Deskripsi |
-|--------|------|------|-----------|
-| GET | `/api/hello` | Public | Test endpoint |
-| GET | `/api/todos` | JWT | List semua todos |
-| POST | `/api/todos` | JWT | Tambah todo baru |
-| PUT | `/api/todos/:id` | JWT | Toggle done todo |
-| DELETE | `/api/todos/:id` | JWT | Hapus todo |
-| GET | `/api/me` | JWT | Info user yang login |
-| POST | `/api/keys` | JWT | Buat API key baru |
-| GET | `/api/keys` | JWT | List semua API keys |
-| DELETE | `/api/keys/:key` | JWT | Hapus API key |
-| GET | `/api/public/todos` | API Key | Public endpoint: list todos |
-| GET | `/api/public/stats` | API Key | Public endpoint: statistik todo |
+| Method | Path                | Auth    | Deskripsi                       |
+| ------ | ------------------- | ------- | ------------------------------- |
+| GET    | `/api/hello`        | Public  | Test endpoint                   |
+| GET    | `/api/todos`        | JWT     | List semua todos                |
+| POST   | `/api/todos`        | JWT     | Tambah todo baru                |
+| PUT    | `/api/todos/:id`    | JWT     | Toggle done todo                |
+| DELETE | `/api/todos/:id`    | JWT     | Hapus todo                      |
+| GET    | `/api/me`           | JWT     | Info user yang login            |
+| POST   | `/api/keys`         | JWT     | Buat API key baru               |
+| GET    | `/api/keys`         | JWT     | List semua API keys             |
+| DELETE | `/api/keys/:key`    | JWT     | Hapus API key                   |
+| GET    | `/api/public/todos` | API Key | Public endpoint: list todos     |
+| GET    | `/api/public/stats` | API Key | Public endpoint: statistik todo |
 
 ## Auth
 
@@ -97,10 +97,11 @@ vite-hono/
 
 ## Tech Stack
 
-| Layer | Teknologi |
-|-------|-----------|
-| Frontend | Vite, React, React Router |
-| UI | shadcn/ui, Tailwind CSS v4 |
-| Backend | Hono |
-| Auth | Supabase Auth |
-| Deploy | Docker |
+| Layer    | Teknologi                  |
+| -------- | -------------------------- |
+| Frontend | Vite, React, React Router  |
+| UI       | shadcn/ui, Tailwind CSS v4 |
+| Backend  | Hono                       |
+| Auth     | Supabase Auth              |
+| Deploy   | Docker                     |
+
