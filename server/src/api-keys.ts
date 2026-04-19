@@ -1,88 +1,109 @@
 import crypto from 'crypto'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 /**
- * API Key Management
- * 
- * Access Key = public identifier (kayak username)
- * Secret Key = used to sign requests (kayak password, tapi ga pernah dikirim langsung)
- * 
- * Client sign request pakai Secret Key → Server verifikasi signature
+ * API Key Management — Database-backed with SHA-256 hashing
+ *
+ * Key format: `ak_<32 random hex chars>` (total 35 chars)
+ * Storage: key_hash (SHA-256), key_prefix (first 8 chars), key_suffix (last 4 chars)
+ * Verification: hash the incoming key → compare with stored hash
  */
 
-interface ApiKey {
-  accessKey: string
-  secretKeyHash: string  // Secret key disimpan sebagai hash
-  name: string
-  createdAt: string
-}
+// ── Helpers ────────────────────────────────────────────────
 
-// In-memory store (production: simpan ke database)
-let apiKeys: ApiKey[] = []
-
-// Generate random hex string
 function randomHex(bytes: number) {
   return crypto.randomBytes(bytes).toString('hex')
 }
 
-// Hash secret key (yang disimpan di DB)
 function hashKey(key: string) {
   return crypto.createHash('sha256').update(key).digest('hex')
 }
 
-/**
- * Buat API key pair baru
- * Returns: { accessKey, secretKey } — secretKey cuma muncul sekali!
- */
-export function createApiKey(name: string) {
-  const accessKey = randomHex(5)            // 10 chars
-  const secretKey = `sk_${randomHex(10)}`   // sk_ + 20 chars
+// ── CRUD ───────────────────────────────────────────────────
 
-  apiKeys.push({
-    accessKey,
-    secretKeyHash: hashKey(secretKey),
-    name,
-    createdAt: new Date().toISOString(),
-  })
+export async function createApiKey(supabase: SupabaseClient, userId: string, name: string) {
+  const rawKey = `ak_${randomHex(16)}`  // ak_ + 32 chars
+  const keyHash = hashKey(rawKey)
+  const keyPrefix = rawKey.slice(0, 8)
+  const keySuffix = rawKey.slice(-4)
 
-  return { accessKey, secretKey }
+  const { data, error } = await supabase
+    .from('api_keys')
+    .insert({
+      user_id: userId,
+      name: name || 'Default',
+      key_hash: keyHash,
+      key_prefix: keyPrefix,
+      key_suffix: keySuffix,
+    })
+    .select('id, name, key_prefix, key_suffix, created_at')
+    .single()
+
+  if (error) throw new Error(error.message)
+
+  return {
+    id: data.id,
+    name: data.name,
+    keyPrefix: data.key_prefix,
+    keySuffix: data.key_suffix,
+    createdAt: data.created_at,
+    // Raw key only returned once!
+    rawKey,
+  }
 }
 
-/**
- * List semua API keys (tanpa secret)
- */
-export function listApiKeys() {
-  return apiKeys.map(({ secretKeyHash: _, ...key }) => key)
+export async function listApiKeys(supabase: SupabaseClient, userId: string) {
+  const { data, error } = await supabase
+    .from('api_keys')
+    .select('id, name, key_prefix, key_suffix, created_at, last_used_at, expires_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+
+  return data.map((row) => ({
+    id: row.id,
+    name: row.name,
+    keyPrefix: row.key_prefix,
+    keySuffix: row.key_suffix,
+    createdAt: row.created_at,
+    lastUsedAt: row.last_used_at,
+    expiresAt: row.expires_at,
+  }))
 }
 
-/**
- * Delete API key
- */
-export function deleteApiKey(accessKey: string) {
-  apiKeys = apiKeys.filter((k) => k.accessKey !== accessKey)
+export async function deleteApiKey(supabase: SupabaseClient, userId: string, keyId: string) {
+  const { error } = await supabase
+    .from('api_keys')
+    .delete()
+    .eq('id', keyId)
+    .eq('user_id', userId)
+
+  if (error) throw new Error(error.message)
 }
 
-/**
- * Verifikasi request signature
- * 
- * Client mengirim:
- *   Header: X-Access-Key: ak_xxxxx
- *   Header: X-Timestamp: 1713512345
- *   Header: X-Signature: HMAC-SHA256(secretKey, "GET /api/public/todos\n1713512345")
- * 
- * Server:
- *   1. Cari accessKey di DB
- *   2. Re-compute signature pakai secretKeyHash... wait, ini ga bisa
- * 
- * Hmm, problem: Secret key ga disimpan plain di server.
- * Makanya untuk HMAC signature, kita perlu simpan secret key yang bisa di-decrypt,
- * ATAU pakai approach yang lebih simple.
- * 
- * Biar simpel, kita pakai approach kayak Stripe:
- *   Client kirim access_key + secret_key langsung di header
- *   Server hash secret_key → compare dengan yang di DB
- */
-export function verifyApiKey(accessKey: string, secretKey: string): boolean {
-  const key = apiKeys.find((k) => k.accessKey === accessKey)
-  if (!key) return false
-  return key.secretKeyHash === hashKey(secretKey)
+export async function verifyApiKey(supabase: SupabaseClient, rawKey: string) {
+  const keyHash = hashKey(rawKey)
+
+  const { data, error } = await supabase
+    .from('api_keys')
+    .select('id, user_id, name, expires_at')
+    .eq('key_hash', keyHash)
+    .single()
+
+  if (error || !data) return null
+
+  // Check expiry
+  if (data.expires_at && new Date(data.expires_at) < new Date()) {
+    return null
+  }
+
+  // Update last_used_at (fire and forget)
+  supabase
+    .from('api_keys')
+    .update({ last_used_at: new Date().toISOString() })
+    .eq('id', data.id)
+    .then(() => {})
+
+  return { id: data.id, userId: data.user_id, name: data.name }
 }

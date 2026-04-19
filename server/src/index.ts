@@ -10,6 +10,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || ''
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || ''
 const PORT = Number(process.env.PORT) || 3000
 
+// Default client (no user context, for public operations like verifyApiKey)
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 const app = new Hono()
@@ -30,30 +31,38 @@ async function userAuth(c: any, next: any) {
   }
 
   const token = authHeader.replace('Bearer ', '')
-  const { data: { user }, error } = await supabase.auth.getUser(token)
+
+  // Create client with user's JWT for RLS
+  const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  })
+
+  const { data: { user }, error } = await userSupabase.auth.getUser(token)
 
   if (error || !user) {
     return c.json({ error: 'Invalid token' }, 401)
   }
 
   c.set('user', user)
+  c.set('supabase', userSupabase)
   await next()
 }
 
-// ── API Key middleware (Access Key + Secret Key) ────────────
+// ── API Key middleware ──────────────────────────────────────
 async function apiKeyAuth(c: any, next: any) {
-  const accessKey = c.req.header('X-Access-Key')
-  const secretKey = c.req.header('X-Secret-Key')
+  const rawKey = c.req.header('X-Api-Key')
 
-  if (!accessKey || !secretKey) {
-    return c.json({ error: 'Missing API key. Send X-Access-Key and X-Secret-Key headers.' }, 401)
+  if (!rawKey) {
+    return c.json({ error: 'Missing API key. Send X-Api-Key header.' }, 401)
   }
 
-  if (!verifyApiKey(accessKey, secretKey)) {
-    return c.json({ error: 'Invalid API key' }, 401)
+  const keyInfo = await verifyApiKey(supabase, rawKey)
+  if (!keyInfo) {
+    return c.json({ error: 'Invalid or expired API key' }, 401)
   }
 
   c.set('authType', 'apikey')
+  c.set('apiKeyInfo', keyInfo)
   await next()
 }
 
@@ -105,18 +114,40 @@ app.delete('/api/todos/:id', (c) => {
 // ── Manage API Keys (user auth) ─────────────────────────────
 app.post('/api/keys', async (c) => {
   const user = c.get('user')
+  const db: ReturnType<typeof createClient> = c.get('supabase')
   const body = await c.req.json<{ name: string }>()
-  const key = createApiKey(body.name || user.email)
-  return c.json(key, 201)
+
+  try {
+    const key = await createApiKey(db, user.id, body.name || user.email)
+    return c.json(key, 201)
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500)
+  }
 })
 
-app.get('/api/keys', (c) => {
-  return c.json(listApiKeys())
+app.get('/api/keys', async (c) => {
+  const user = c.get('user')
+  const db: ReturnType<typeof createClient> = c.get('supabase')
+
+  try {
+    const keys = await listApiKeys(db, user.id)
+    return c.json(keys)
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500)
+  }
 })
 
-app.delete('/api/keys/:accessKey', (c) => {
-  deleteApiKey(c.req.param('accessKey'))
-  return c.json({ ok: true })
+app.delete('/api/keys/:id', async (c) => {
+  const user = c.get('user')
+  const db: ReturnType<typeof createClient> = c.get('supabase')
+  const keyId = c.req.param('id')
+
+  try {
+    await deleteApiKey(db, user.id, keyId)
+    return c.json({ ok: true })
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500)
+  }
 })
 
 // ═══════════════════════════════════════════════════════════

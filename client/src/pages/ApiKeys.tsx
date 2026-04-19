@@ -19,16 +19,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { Copy, Check, Trash2 } from 'lucide-react'
 
 interface ApiKey {
-  accessKey: string
+  id: string
   name: string
+  keyPrefix: string
+  keySuffix: string
   createdAt: string
+  lastUsedAt: string | null
+  expiresAt: string | null
 }
 
 interface NewKeyResponse {
-  accessKey: string
-  secretKey: string
+  id: string
+  name: string
+  keyPrefix: string
+  keySuffix: string
+  createdAt: string
+  rawKey: string
 }
 
 export function ApiKeys() {
@@ -71,9 +80,9 @@ export function ApiKeys() {
     }
   }
 
-  const deleteKey = async (accessKey: string) => {
+  const deleteKey = async (id: string) => {
     if (!confirm('Hapus API key ini?')) return
-    await authFetch(`/api/keys/${accessKey}`, { method: 'DELETE' })
+    await authFetch(`/api/keys/${id}`, { method: 'DELETE' })
     fetchKeys()
   }
 
@@ -118,32 +127,19 @@ export function ApiKeys() {
                 <div className="space-y-2">
                   <Label>Name</Label>
                   <code className="block rounded bg-muted px-3 py-2 text-sm font-mono">
-                    {newKeyName || user?.email}
+                    {newKeyResult.name}
                   </code>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Access Key</Label>
+                  <Label>API Key</Label>
                   <div className="flex gap-2">
                     <code className="flex-1 rounded bg-muted px-3 py-2 text-sm font-mono break-all">
-                      {newKeyResult.accessKey}
+                      {newKeyResult.rawKey}
                     </code>
-                    <Button variant="outline" size="sm"
-                      onClick={() => copyToClipboard(newKeyResult.accessKey, 'access')}>
-                      {copied === 'access' ? '✓' : 'Copy'}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Secret Key</Label>
-                  <div className="flex gap-2">
-                    <code className="flex-1 rounded bg-muted px-3 py-2 text-sm font-mono break-all">
-                      {newKeyResult.secretKey}
-                    </code>
-                    <Button variant="outline" size="sm"
-                      onClick={() => copyToClipboard(newKeyResult.secretKey, 'secret')}>
-                      {copied === 'secret' ? '✓' : 'Copy'}
+                    <Button variant="outline" size="icon"
+                      onClick={() => copyToClipboard(newKeyResult.rawKey, 'key')}>
+                      {copied === 'key' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
@@ -152,8 +148,7 @@ export function ApiKeys() {
                   <Label className="text-muted-foreground">Contoh Penggunaan</Label>
                   <pre className="mt-2 rounded bg-muted p-3 text-xs font-mono overflow-x-auto">
 {`curl http://localhost:3000/api/public/todos \\
-  -H "X-Access-Key: ${newKeyResult.accessKey}" \\
-  -H "X-Secret-Key: ${newKeyResult.secretKey}"`}
+  -H "X-Api-Key: ${newKeyResult.rawKey}"`}
                   </pre>
                 </div>
 
@@ -190,31 +185,37 @@ export function ApiKeys() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nama</TableHead>
-                <TableHead>Access Key</TableHead>
+                <TableHead>Key</TableHead>
                 <TableHead>Dibuat</TableHead>
+                <TableHead>Terakhir Digunakan</TableHead>
                 <TableHead className="w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {keys.map((key) => (
-                <TableRow key={key.accessKey}>
+                <TableRow key={key.id}>
                   <TableCell className="font-medium">{key.name}</TableCell>
                   <TableCell>
                     <code className="rounded bg-muted px-2 py-1 text-xs font-mono">
-                      {key.accessKey}
+                      {key.keyPrefix}...{key.keySuffix}
                     </code>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(key.createdAt).toLocaleDateString('id-ID')}
                   </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {key.lastUsedAt
+                      ? new Date(key.lastUsedAt).toLocaleDateString('id-ID')
+                      : '-'}
+                  </TableCell>
                   <TableCell>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => deleteKey(key.accessKey)}
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => deleteKey(key.id)}
                     >
-                      Hapus
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
