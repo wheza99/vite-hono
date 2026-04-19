@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth'
 import { authFetch } from '@/lib/api'
 import {
@@ -63,9 +63,9 @@ export function ApiKeys() {
     setLoading(false)
   }
 
-  useState(() => {
+  useEffect(() => {
     fetchKeys()
-  })
+  }, [])
 
   const createKey = async () => {
     const res = await authFetch('/api/keys', {
