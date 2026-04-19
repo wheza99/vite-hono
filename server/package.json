@@ -8,8 +8,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.19.14",
-    "hono": "^4.7.0",
-    "jose": "^6.2.2"
+    "@supabase/supabase-js": "^2.103.3",
+    "hono": "^4.7.0"
   },
   "devDependencies": {
     "tsx": "^4.21.0"

@@ -2,14 +2,16 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
-import { jwt } from 'hono/jwt'
-
-const app = new Hono()
+import { createClient } from '@supabase/supabase-js'
 
 // ── Env config ──────────────────────────────────────────────
 const SUPABASE_URL = process.env.SUPABASE_URL || ''
-const SUPABASE_JWT_SECRET = process.env.SUPABASE_JWT_SECRET || ''
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || ''
 const PORT = Number(process.env.PORT) || 3000
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+const app = new Hono()
 
 // ── CORS ────────────────────────────────────────────────────
 app.use('/api/*', cors())
@@ -20,10 +22,23 @@ app.get('/api/hello', (c) => {
 })
 
 // ── Auth middleware ──────────────────────────────────────────
-// Verify Supabase JWT on protected routes
-const authMiddleware = jwt({
-  secret: SUPABASE_JWT_SECRET,
-})
+async function authMiddleware(c: any, next: any) {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+
+  const token = authHeader.replace('Bearer ', '')
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+
+  if (error || !user) {
+    return c.json({ error: 'Invalid token' }, 401)
+  }
+
+  // Simpan user di context buat dipake route handlers
+  c.set('user', user)
+  await next()
+}
 
 // ── Protected routes ────────────────────────────────────────
 let todos = [
@@ -32,10 +47,19 @@ let todos = [
 ]
 
 app.use('/api/todos/*', authMiddleware)
+app.use('/api/me', authMiddleware)
+
+app.get('/api/me', (c) => {
+  const user = c.get('user')
+  return c.json({
+    id: user.id,
+    email: user.email,
+  })
+})
 
 app.get('/api/todos', (c) => {
-  const user = c.get('jwtPayload')
-  console.log(`Todos requested by: ${user.sub}`)
+  const user = c.get('user')
+  console.log(`Todos requested by: ${user.email}`)
   return c.json(todos)
 })
 
@@ -57,16 +81,6 @@ app.delete('/api/todos/:id', (c) => {
   const id = Number(c.req.param('id'))
   todos = todos.filter((t) => t.id !== id)
   return c.json({ ok: true })
-})
-
-// ── Auth status endpoint ────────────────────────────────────
-app.get('/api/me', authMiddleware, (c) => {
-  const user = c.get('jwtPayload')
-  return c.json({
-    id: user.sub,
-    email: user.email,
-    role: user.role,
-  })
 })
 
 // ── Production: serve React static files ────────────────────
