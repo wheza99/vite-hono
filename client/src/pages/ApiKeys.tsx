@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '@/lib/auth'
 import { authFetch } from '@/lib/api'
 import {
@@ -56,26 +56,35 @@ export function ApiKeys() {
   const [newKeyResult, setNewKeyResult] = useState<NewKeyResponse | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
 
-  const fetchKeys = async () => {
-    const res = await authFetch('/api/keys')
-    const data = await res.json()
-    setKeys(data)
-    setLoading(false)
-  }
+  const fetchKeys = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/keys')
+      const data = await res.json()
+      setKeys(data)
+    } catch (err) {
+      console.error('Failed to fetch keys:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     fetchKeys()
-  }, [])
+  }, [fetchKeys])
 
   const createKey = async () => {
-    const res = await authFetch('/api/keys', {
-      method: 'POST',
-      body: JSON.stringify({ name: newKeyName || user?.email }),
-    })
-    const data = await res.json()
-    setNewKeyResult(data)
-    setNewKeyName('')
-    fetchKeys()
+    try {
+      const res = await authFetch('/api/keys', {
+        method: 'POST',
+        body: JSON.stringify({ name: newKeyName || user?.email }),
+      })
+      const data = await res.json()
+      setNewKeyResult(data)
+      setNewKeyName('')
+      fetchKeys()
+    } catch (err) {
+      console.error('Failed to create key:', err)
+    }
   }
 
   const deleteKey = async (accessKey: string) => {
@@ -95,53 +104,56 @@ export function ApiKeys() {
     setNewKeyName('')
   }
 
-  const columns: ColumnDef<ApiKey>[] = [
-    {
-      accessorKey: 'name',
-      header: 'Nama',
-    },
-    {
-      accessorKey: 'accessKey',
-      header: 'Access Key',
-      cell: ({ row }) => (
-        <code className="rounded bg-muted px-2 py-1 text-xs font-mono">
-          {row.original.accessKey}
-        </code>
-      ),
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Dibuat',
-      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString('id-ID'),
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-              Hapus
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Hapus API Key?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Key <code className="text-xs">{row.original.accessKey}</code> akan dihapus permanen.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Batal</AlertDialogCancel>
-              <AlertDialogAction onClick={() => deleteKey(row.original.accessKey)}>
-                Ya, Hapus
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      ),
-    },
-  ]
+  const columns = useMemo<ColumnDef<ApiKey>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Nama',
+      },
+      {
+        accessorKey: 'accessKey',
+        header: 'Access Key',
+        cell: ({ row }) => (
+          <code className="rounded bg-muted px-2 py-1 text-xs font-mono">
+            {row.original.accessKey}
+          </code>
+        ),
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Dibuat',
+        cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString('id-ID'),
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                Hapus
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Hapus API Key?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Key <code className="text-xs">{row.original.accessKey}</code> akan dihapus permanen.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Batal</AlertDialogCancel>
+                <AlertDialogAction onClick={() => deleteKey(row.original.accessKey)}>
+                  Ya, Hapus
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ),
+      },
+    ],
+    [] // eslint-disable-line react-hooks/exhaustive-deps
+  )
 
   const table = useReactTable({
     data: keys,
