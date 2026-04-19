@@ -31,6 +31,12 @@ vite-hono/
 ├── package.json                     # Root scripts: dev, build, docker commands
 ├── README.md                        # Dokumentasi project ini
 │
+├── types/schema/                    # SQL schema untuk Supabase
+│   ├── api_keys.sql                 # Table api_keys: key_hash, key_prefix, key_suffix, RLS
+│   ├── payments.sql                 # Table payments: Tripay integration, RLS (no update/delete)
+│   ├── transactions.sql             # Table transactions: credit/debit ledger, RLS (read only)
+│   └── credits.sql                  # Table credits: user balance, RLS (read only)
+│
 ├── client/                          # Frontend — Vite + React + shadcn/ui
 │   ├── .env                         # Supabase URL dan anon key (tidak di-commit)
 │   ├── .env.example                 # Template env variable untuk client
@@ -39,6 +45,9 @@ vite-hono/
 │   ├── package.json                 # Dependencies: React, Vite, shadcn, Supabase
 │   ├── tsconfig.json                # TypeScript config dengan @ alias
 │   ├── vite.config.ts               # Vite config: React, Tailwind, Hono API middleware
+│   ├── public/
+│   │   ├── logo.png                 # Logo aplikasi (circular crop di navbar)
+│   │   └── favicon.png              # Favicon browser (circular crop dari logo)
 │   └── src/
 │       ├── index.css                # Tailwind CSS + shadcn CSS variables
 │       ├── main.tsx                 # Root component: routing, auth provider, navbar
@@ -51,27 +60,33 @@ vite-hono/
 │       │   ├── card.tsx              # Komponen kartu kontainer (shadcn)
 │       │   ├── checkbox.tsx          # Komponen checkbox (shadcn)
 │       │   ├── dialog.tsx            # Komponen modal dialog (shadcn)
+│       │   ├── dropdown-menu.tsx     # Dropdown menu untuk profile (shadcn)
 │       │   ├── input.tsx             # Komponen input teks (shadcn)
 │       │   ├── label.tsx             # Komponen label form (shadcn)
-│       │   └── table.tsx             # Komponen tabel data (shadcn)
+│       │   ├── separator.tsx         # Vertical/horizontal divider (shadcn)
+│       │   ├── table.tsx             # Komponen tabel data (shadcn)
+│       │   └── tabs.tsx              # Tab component untuk Billing page (shadcn)
 │       ├── lib/
 │       │   ├── api.ts               # Helper fetch yang otomatis kirim JWT token
 │       │   ├── auth.tsx             # AuthProvider dan useAuth hook untuk Supabase
 │       │   ├── supabase.ts          # Inisialisasi Supabase client
 │       │   └── utils.ts             # Utility cn() untuk merge Tailwind classes
 │       └── pages/
-│           ├── ApiKeys.tsx           # Halaman kelola API key dengan data table
-│           ├── Home.tsx              # Halaman utama menampilkan pesan dari Hono
+│           ├── HeroSection.tsx       # Landing page: hero section + footer
+│           ├── Dashboard.tsx         # CRUD todo dengan data table + dialog
+│           ├── ApiKeys.tsx           # Kelola API key: create, list, delete (SHA-256 hashed)
+│           ├── Billing.tsx           # Billing: credits, Tripay top-up, payment & transaction tabs
 │           ├── Login.tsx             # Halaman login dengan email dan password
-│           ├── Register.tsx          # Halaman registrasi dengan verifikasi email
-│           └── Todos.tsx             # Halaman CRUD todo dengan auth protection
+│           └── Register.tsx          # Halaman registrasi dengan verifikasi email
 │
 └── server/                          # Backend — Hono (production Docker)
+    ├── .env                         # Env: Supabase + Tripay keys (tidak di-commit)
     ├── package.json                 # Dependencies: Hono, Supabase, @hono/node-server
     ├── tsconfig.json                # TypeScript config untuk server
     └── src/
         ├── index.ts                 # Hono server: API routes, auth middleware, static files
-        └── api-keys.ts              # Logic generate, store, dan verifikasi API key
+        ├── api-keys.ts              # Logic generate, store, dan verifikasi API key
+        └── payments.ts              # Tripay integration: create transaction, check status, add credits
 ```
 
 ## API Endpoints

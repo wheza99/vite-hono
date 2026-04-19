@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,9 @@
   "dependencies": {
     "@hono/node-server": "^1.19.14",
     "@supabase/supabase-js": "^2.103.3",
+    "axios": "^1.15.0",
     "crypto-js": "^4.2.0",
+    "dotenv": "^17.4.2",
     "hono": "^4.7.0"
   },
   "devDependencies": {

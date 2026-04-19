@@ -1,43 +1,76 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router'
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { User, KeyRound, LogOut, Wallet } from 'lucide-react'
 import { AuthProvider, useAuth } from '@/lib/auth'
-import { Home } from './pages/Home'
+import { HeroSection } from './pages/HeroSection'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
-import { Todos } from './pages/Todos'
+import { Dashboard } from './pages/Dashboard'
 import { ApiKeys } from './pages/ApiKeys'
+import { Billing } from './pages/Billing'
 import './index.css'
 
 function Navbar() {
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
 
   return (
-    <nav className="flex items-center justify-between px-6 py-3 border-b">
+    <nav className="border-b">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
       <div className="flex items-center gap-1">
         <Link to="/">
-          <Button variant="ghost" size="sm">Home</Button>
+          <img src="/logo.png" alt="Home" className="h-8 w-8 rounded-full object-cover" />
         </Link>
         {user && (
-          <>
-            <Link to="/todos">
-              <Button variant="ghost" size="sm">Todos</Button>
-            </Link>
-            <Link to="/api-keys">
-              <Button variant="ghost" size="sm">API Keys</Button>
-            </Link>
-          </>
+          <Link to="/todos">
+            <Button variant="ghost" size="sm">Dashboard</Button>
+          </Link>
         )}
       </div>
       <div className="flex items-center gap-2">
         {user ? (
-          <>
-            <span className="text-sm text-muted-foreground">{user.email}</span>
-            <Button variant="outline" size="sm" onClick={signOut}>
-              Logout
-            </Button>
-          </>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="rounded-full">
+                <User className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-1.5 text-sm font-medium truncate">{user.email}</div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() => navigate('/api-keys')}
+              >
+                <KeyRound className="h-4 w-4" />
+                API Keys
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() => navigate('/billing')}
+              >
+                <Wallet className="h-4 w-4" />
+                Billing
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive flex items-center gap-2"
+                onClick={() => signOut()}
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <>
             <Link to="/login">
@@ -48,6 +81,7 @@ function Navbar() {
             </Link>
           </>
         )}
+      </div>
       </div>
     </nav>
   )
@@ -77,14 +111,14 @@ function App() {
       <AuthProvider>
         <Navbar />
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HeroSection />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
             path="/todos"
             element={
               <ProtectedRoute>
-                <Todos />
+                <Dashboard />
               </ProtectedRoute>
             }
           />
@@ -93,6 +127,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ApiKeys />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/billing"
+            element={
+              <ProtectedRoute>
+                <Billing />
               </ProtectedRoute>
             }
           />
