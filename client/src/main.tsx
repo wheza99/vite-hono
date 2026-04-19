@@ -9,13 +9,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { User, KeyRound, LogOut, CheckSquare } from 'lucide-react'
+import { User, KeyRound, LogOut, Wallet } from 'lucide-react'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import { HeroSection } from './pages/HeroSection'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
 import { ApiKeys } from './pages/ApiKeys'
+import { Billing } from './pages/Billing'
 import './index.css'
 
 function Navbar() {
@@ -52,6 +53,13 @@ function Navbar() {
               >
                 <KeyRound className="h-4 w-4" />
                 API Keys
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() => navigate('/billing')}
+              >
+                <Wallet className="h-4 w-4" />
+                Billing
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -119,6 +127,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ApiKeys />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/billing"
+            element={
+              <ProtectedRoute>
+                <Billing />
               </ProtectedRoute>
             }
           />
