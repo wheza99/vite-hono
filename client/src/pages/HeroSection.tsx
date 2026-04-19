@@ -8,7 +8,7 @@ export function HeroSection() {
   return (
     <>
       <section className={cn('py-32')}>
-        <div className="container mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="mx-auto mb-12 flex max-w-5xl flex-col items-center gap-6 ">
             <a
               href="https://pabrikstartup.id"
@@ -48,7 +48,7 @@ export function HeroSection() {
         </div>
       </section>
       <footer className="border-t py-8">
-        <div className="container mx-auto flex flex-col items-center justify-between gap-4 md:flex-row">
+        <div className="max-w-7xl mx-auto flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Vite Hono. All rights reserved.
           </p>
