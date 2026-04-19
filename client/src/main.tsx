@@ -11,10 +11,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { User, KeyRound, LogOut, CheckSquare } from 'lucide-react'
 import { AuthProvider, useAuth } from '@/lib/auth'
-import { Home } from './pages/Home'
+import { HeroSection } from './pages/HeroSection'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
-import { Todos } from './pages/Todos'
+import { Dashboard } from './pages/Dashboard'
 import { ApiKeys } from './pages/ApiKeys'
 import './index.css'
 
@@ -23,14 +23,15 @@ function Navbar() {
   const navigate = useNavigate()
 
   return (
-    <nav className="flex items-center justify-between px-6 py-3 border-b">
+    <nav className="border-b">
+      <div className="container mx-auto flex items-center justify-between px-6 py-3">
       <div className="flex items-center gap-1">
         <Link to="/">
-          <Button variant="ghost" size="sm">Home</Button>
+          <img src="/logo.png" alt="Home" className="h-8 w-8 rounded-full object-cover" />
         </Link>
         {user && (
           <Link to="/todos">
-            <Button variant="ghost" size="sm">Todos</Button>
+            <Button variant="ghost" size="sm">Dashboard</Button>
           </Link>
         )}
       </div>
@@ -73,6 +74,7 @@ function Navbar() {
           </>
         )}
       </div>
+      </div>
     </nav>
   )
 }
@@ -101,14 +103,14 @@ function App() {
       <AuthProvider>
         <Navbar />
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HeroSection />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
             path="/todos"
             element={
               <ProtectedRoute>
-                <Todos />
+                <Dashboard />
               </ProtectedRoute>
             }
           />
