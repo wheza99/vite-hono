@@ -4,8 +4,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 /**
  * API Key Management — Database-backed with SHA-256 hashing
  *
- * Key format: `ak_<32 random hex chars>` (total 35 chars)
- * Storage: key_hash (SHA-256), key_prefix (first 8 chars), key_suffix (last 4 chars)
+ * Key format: `sk-<32 random hex chars>` (total 35 chars)
+ * Storage: key_hash (SHA-256), key_prefix (first 7 chars), key_suffix (last 4 chars)
  * Verification: hash the incoming key → compare with stored hash
  */
 
@@ -22,9 +22,9 @@ function hashKey(key: string) {
 // ── CRUD ───────────────────────────────────────────────────
 
 export async function createApiKey(supabase: SupabaseClient, userId: string, name: string) {
-  const rawKey = `ak_${randomHex(16)}`  // ak_ + 32 chars
+  const rawKey = `sk-${randomHex(16)}`  // sk- + 32 chars
   const keyHash = hashKey(rawKey)
-  const keyPrefix = rawKey.slice(0, 8)
+  const keyPrefix = rawKey.slice(0, 7)  // "sk-" + 4 chars
   const keySuffix = rawKey.slice(-4)
 
   const { data, error } = await supabase

@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
@@ -8,10 +9,14 @@ import { createApiKey, listApiKeys, deleteApiKey, verifyApiKey } from './api-key
 // ── Env config ──────────────────────────────────────────────
 const SUPABASE_URL = process.env.SUPABASE_URL || ''
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || ''
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const PORT = Number(process.env.PORT) || 3000
 
-// Default client (no user context, for public operations like verifyApiKey)
+// Anon client (for user operations with JWT + RLS)
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// Service role client (bypasses RLS, for verify API key)
+const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 const app = new Hono()
 
@@ -56,7 +61,7 @@ async function apiKeyAuth(c: any, next: any) {
     return c.json({ error: 'Missing API key. Send X-Api-Key header.' }, 401)
   }
 
-  const keyInfo = await verifyApiKey(supabase, rawKey)
+  const keyInfo = await verifyApiKey(supabaseAdmin, rawKey)
   if (!keyInfo) {
     return c.json({ error: 'Invalid or expired API key' }, 401)
   }

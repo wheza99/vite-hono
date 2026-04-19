@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cd client && npm run dev",
-    "build": "cd client && npm run build",
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
     "start": "cd server && npm run dev",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",

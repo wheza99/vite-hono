@@ -64,9 +64,9 @@ api.delete('/todos/:id', (c) => {
 // ── API Key Management ──────────────────────────────────────
 api.post('/keys', async (c) => {
   const body = await c.req.json<{ name: string }>()
-  const rawKey = `ak_${randomHex(16)}`
+  const rawKey = `sk-${randomHex(16)}`
   const keyHash = hashKey(rawKey)
-  const keyPrefix = rawKey.slice(0, 8)
+  const keyPrefix = rawKey.slice(0, 7)
   const keySuffix = rawKey.slice(-4)
   const id = crypto.randomUUID()
 

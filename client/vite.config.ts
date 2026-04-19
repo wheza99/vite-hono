@@ -2,43 +2,39 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
-import api from './src/api'
+import fs from 'fs'
 
-function honoApi(): Plugin {
+function spaFallback(): Plugin {
   return {
-    name: 'hono-api',
+    name: 'spa-fallback',
     configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
-        if (req.url?.startsWith('/api')) {
-          const url = new URL(req.url, `http://${req.headers.host}`)
-          const request = new Request(url.toString(), {
-            method: req.method,
-            headers: req.headers as Record<string, string>,
-            body: ['GET', 'HEAD'].includes(req.method)
-              ? undefined
-              : await new Promise((resolve) => {
-                  let body = ''
-                  req.on('data', (chunk) => (body += chunk))
-                  req.on('end', () => resolve(body))
-                }),
-          })
-          const response = await api.fetch(request)
-          res.statusCode = response.status
-          response.headers.forEach((v, k) => res.setHeader(k, v))
-          res.end(await response.text())
-        } else {
-          next()
-        }
-      })
+      return () => {
+        server.middlewares.use((req, res, next) => {
+          const url = req.url || '/'
+          if (url.startsWith('/@') || url.startsWith('/assets/') || url.match(/\.[a-zA-Z0-9]+$/)) {
+            return next()
+          }
+          const html = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8')
+          server.transformIndexHtml(url, html).then((transformed) => {
+            res.setHeader('Content-Type', 'text/html')
+            res.end(transformed)
+          }).catch(next)
+        })
+      }
     },
   }
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), honoApi()],
+  plugins: [react(), tailwindcss(), spaFallback()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    proxy: {
+      '/api/': 'http://localhost:3000',
     },
   },
 })

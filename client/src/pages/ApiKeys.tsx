@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Copy, Check, Trash2 } from 'lucide-react'
+import { Copy, Check, Trash2, TriangleAlert } from 'lucide-react'
 
 interface ApiKey {
   id: string
@@ -120,10 +120,6 @@ export function ApiKeys() {
 
             {newKeyResult ? (
               <div className="space-y-4">
-                <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                  Copy secret key sekarang! Tidak akan ditampilkan lagi.
-                </div>
-
                 <div className="space-y-2">
                   <Label>Name</Label>
                   <code className="block rounded bg-muted px-3 py-2 text-sm font-mono">
@@ -134,9 +130,12 @@ export function ApiKeys() {
                 <div className="space-y-2">
                   <Label>API Key</Label>
                   <div className="flex gap-2">
-                    <code className="flex-1 rounded bg-muted px-3 py-2 text-sm font-mono break-all">
-                      {newKeyResult.rawKey}
-                    </code>
+                    <Input
+                      readOnly
+                      value={newKeyResult.rawKey}
+                      className="font-mono text-sm"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                    />
                     <Button variant="outline" size="icon"
                       onClick={() => copyToClipboard(newKeyResult.rawKey, 'key')}>
                       {copied === 'key' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -144,15 +143,12 @@ export function ApiKeys() {
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <Label className="text-muted-foreground">Contoh Penggunaan</Label>
-                  <pre className="mt-2 rounded bg-muted p-3 text-xs font-mono overflow-x-auto">
-{`curl http://localhost:3000/api/public/todos \\
-  -H "X-Api-Key: ${newKeyResult.rawKey}"`}
-                  </pre>
-                </div>
-
                 <Button onClick={closeDialog} className="w-full">Done</Button>
+
+                <div className="rounded-md bg-yellow-500/10 border border-yellow-500/20 px-4 py-3 text-sm text-yellow-600 dark:text-yellow-400 flex gap-2">
+                  <TriangleAlert className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>Simpan API Key kamu di tempat yang aman. Key ini hanya ditampilkan sekali dan tidak bisa dilihat lagi setelah dialog ini ditutup.</span>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
