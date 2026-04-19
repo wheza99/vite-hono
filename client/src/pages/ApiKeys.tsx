@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Component, type ReactNode } from 'react'
 import { useAuth } from '@/lib/auth'
 import { authFetch } from '@/lib/api'
 import {
@@ -45,6 +45,27 @@ interface ApiKey {
 interface NewKeyResponse {
   accessKey: string
   secretKey: string
+}
+
+// Error boundary biar ga blank page
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
+  state = { error: null as string | null }
+  static getDerivedStateFromError(e: Error) {
+    return { error: e.message }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="max-w-3xl mx-auto py-8 px-4">
+          <div className="rounded-md bg-destructive/10 px-4 py-3 text-destructive">
+            <p className="font-bold">Error</p>
+            <pre className="mt-2 text-xs whitespace-pre-wrap">{this.state.error}</pre>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
 }
 
 export function ApiKeys() {
@@ -162,6 +183,7 @@ export function ApiKeys() {
   })
 
   return (
+    <ErrorBoundary>
     <div className="max-w-3xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -285,5 +307,6 @@ export function ApiKeys() {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   )
 }
