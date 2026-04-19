@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
+import { authFetch } from '@/lib/api'
 
 interface Todo {
   id: number
@@ -16,7 +17,7 @@ export function Todos() {
   const [input, setInput] = useState('')
 
   const fetchTodos = () => {
-    fetch('/api/todos')
+    authFetch('/api/todos')
       .then((r) => r.json())
       .then(setTodos)
   }
@@ -27,9 +28,8 @@ export function Todos() {
 
   const addTodo = async () => {
     if (!input.trim()) return
-    await fetch('/api/todos', {
+    await authFetch('/api/todos', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: input }),
     })
     setInput('')
@@ -37,16 +37,15 @@ export function Todos() {
   }
 
   const toggleTodo = async (id: number, done: boolean) => {
-    await fetch(`/api/todos/${id}`, {
+    await authFetch(`/api/todos/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ done: !done }),
     })
     fetchTodos()
   }
 
   const deleteTodo = async (id: number) => {
-    await fetch(`/api/todos/${id}`, { method: 'DELETE' })
+    await authFetch(`/api/todos/${id}`, { method: 'DELETE' })
     fetchTodos()
   }
 
@@ -64,7 +63,6 @@ export function Todos() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Add todo */}
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -80,7 +78,6 @@ export function Todos() {
             <Button type="submit">Add</Button>
           </form>
 
-          {/* Todo list */}
           <div className="space-y-2">
             {todos.map((todo) => (
               <div
