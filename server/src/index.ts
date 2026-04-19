@@ -5,6 +5,7 @@ import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { createClient } from '@supabase/supabase-js'
 import { createApiKey, listApiKeys, deleteApiKey, verifyApiKey } from './api-keys'
+import { createPayment, listPayments, getPayment, checkAndUpdatePaymentStatus } from './payments'
 
 // ── Env config ──────────────────────────────────────────────
 const SUPABASE_URL = process.env.SUPABASE_URL || ''
@@ -78,6 +79,9 @@ async function apiKeyAuth(c: any, next: any) {
 app.use('/api/me', userAuth)
 app.use('/api/todos/*', userAuth)
 app.use('/api/keys/*', userAuth)
+app.use('/api/payments/*', userAuth)
+app.use('/api/transactions', userAuth)
+app.use('/api/credits', userAuth)
 
 app.get('/api/me', (c) => {
   const user = c.get('user')
@@ -150,6 +154,92 @@ app.delete('/api/keys/:id', async (c) => {
   try {
     await deleteApiKey(db, user.id, keyId)
     return c.json({ ok: true })
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500)
+  }
+})
+
+// ═══════════════════════════════════════════════════════════
+// PAYMENTS ROUTES (JWT dari Supabase)
+// ═══════════════════════════════════════════════════════════
+
+app.post('/api/payments/topup', async (c) => {
+  const user = c.get('user')
+  const db: ReturnType<typeof createClient> = c.get('supabase')
+  const body = await c.req.json<{ amount: number; method?: string }>()
+
+  try {
+    const origin = c.req.header('origin') || process.env.APP_URL || 'http://localhost:5173'
+    const payment = await createPayment(db, user.id, user.email, body.amount, body.method, `${origin}/billing`)
+    return c.json(payment, 201)
+  } catch (err: any) {
+    return c.json({ error: err.message }, 400)
+  }
+})
+
+app.get('/api/payments', async (c) => {
+  const user = c.get('user')
+  const db: ReturnType<typeof createClient> = c.get('supabase')
+
+  try {
+    const payments = await listPayments(db, user.id)
+    return c.json(payments)
+  } catch (err: any) {
+    return c.json({ error: err.message }, 500)
+  }
+})
+
+app.get('/api/payments/:id/status', async (c) => {
+  const user = c.get('user')
+  const db: ReturnType<typeof createClient> = c.get('supabase')
+  const paymentId = c.req.param('id')
+
+  try {
+    // Verify ownership
+    await getPayment(db, user.id, paymentId)
+    // Check and update status via service role
+    const payment = await checkAndUpdatePaymentStatus(supabaseAdmin, paymentId)
+    return c.json(payment)
+  } catch (err: any) {
+    return c.json({ error: err.message }, 400)
+  }
+})
+
+// ═══════════════════════════════════════════════════════════
+// CREDITS & TRANSACTIONS ROUTES (JWT dari Supabase)
+// ═══════════════════════════════════════════════════════════
+
+app.get('/api/credits', async (c) => {
+  const user = c.get('user')
+  const db: ReturnType<typeof createClient> = c.get('supabase')
+
+  try {
+    const { data, error } = await db
+      .from('credits')
+      .select('total')
+      .eq('user_id', user.id)
+      .single()
+
+    if (error || !data) return c.json({ total: 0 })
+    return c.json(data)
+  } catch (err: any) {
+    return c.json({ total: 0 })
+  }
+})
+
+app.get('/api/transactions', async (c) => {
+  const user = c.get('user')
+  const db: ReturnType<typeof createClient> = c.get('supabase')
+
+  try {
+    const { data, error } = await db
+      .from('transactions')
+      .select('id, description, amount, type, metadata, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) throw new Error(error.message)
+    return c.json(data)
   } catch (err: any) {
     return c.json({ error: err.message }, 500)
   }
