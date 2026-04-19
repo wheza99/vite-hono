@@ -34,8 +34,8 @@ function hashKey(key: string) {
  * Returns: { accessKey, secretKey } — secretKey cuma muncul sekali!
  */
 export function createApiKey(name: string) {
-  const accessKey = `ak_${randomHex(16)}`  // ak_xxxxx...
-  const secretKey = `sk_${randomHex(32)}`  // sk_xxxxx...
+  const accessKey = randomHex(5)            // 10 chars
+  const secretKey = `sk_${randomHex(10)}`   // sk_ + 20 chars
 
   apiKeys.push({
     accessKey,

@@ -59,8 +59,8 @@ api.delete('/todos/:id', (c) => {
 // ── API Key Management ──────────────────────────────────────
 api.post('/keys', async (c) => {
   const body = await c.req.json<{ name: string }>()
-  const accessKey = `ak_${randomHex(16)}`
-  const secretKey = `sk_${randomHex(32)}`
+  const accessKey = randomHex(5)            // 10 chars
+  const secretKey = `sk_${randomHex(10)}`   // sk_ + 20 chars
   apiKeys.push({
     accessKey,
     secretKeyHash: hashKey(secretKey),
