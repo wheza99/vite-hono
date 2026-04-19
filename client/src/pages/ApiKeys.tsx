@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, Component, type ReactNode } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/auth'
 import { authFetch } from '@/lib/api'
 import {
@@ -19,22 +19,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
 
 interface ApiKey {
   accessKey: string
@@ -45,27 +29,6 @@ interface ApiKey {
 interface NewKeyResponse {
   accessKey: string
   secretKey: string
-}
-
-// Error boundary biar ga blank page
-class ErrorBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
-  state = { error: null as string | null }
-  static getDerivedStateFromError(e: Error) {
-    return { error: e.message }
-  }
-  render() {
-    if (this.state.error) {
-      return (
-        <div className="max-w-3xl mx-auto py-8 px-4">
-          <div className="rounded-md bg-destructive/10 px-4 py-3 text-destructive">
-            <p className="font-bold">Error</p>
-            <pre className="mt-2 text-xs whitespace-pre-wrap">{this.state.error}</pre>
-          </div>
-        </div>
-      )
-    }
-    return this.props.children
-  }
 }
 
 export function ApiKeys() {
@@ -109,6 +72,7 @@ export function ApiKeys() {
   }
 
   const deleteKey = async (accessKey: string) => {
+    if (!confirm('Hapus API key ini?')) return
     await authFetch(`/api/keys/${accessKey}`, { method: 'DELETE' })
     fetchKeys()
   }
@@ -125,65 +89,7 @@ export function ApiKeys() {
     setNewKeyName('')
   }
 
-  const columns = useMemo<ColumnDef<ApiKey>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Nama',
-      },
-      {
-        accessorKey: 'accessKey',
-        header: 'Access Key',
-        cell: ({ row }) => (
-          <code className="rounded bg-muted px-2 py-1 text-xs font-mono">
-            {row.original.accessKey}
-          </code>
-        ),
-      },
-      {
-        accessorKey: 'createdAt',
-        header: 'Dibuat',
-        cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString('id-ID'),
-      },
-      {
-        id: 'actions',
-        header: '',
-        cell: ({ row }) => (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                Hapus
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Hapus API Key?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Key <code className="text-xs">{row.original.accessKey}</code> akan dihapus permanen.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Batal</AlertDialogCancel>
-                <AlertDialogAction onClick={() => deleteKey(row.original.accessKey)}>
-                  Ya, Hapus
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        ),
-      },
-    ],
-    [] // eslint-disable-line react-hooks/exhaustive-deps
-  )
-
-  const table = useReactTable({
-    data: keys,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
-
   return (
-    <ErrorBoundary>
     <div className="max-w-3xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -282,24 +188,35 @@ export function ApiKeys() {
         <div className="rounded-md border">
           <Table>
             <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
+              <TableRow>
+                <TableHead>Nama</TableHead>
+                <TableHead>Access Key</TableHead>
+                <TableHead>Dibuat</TableHead>
+                <TableHead className="w-[80px]"></TableHead>
+              </TableRow>
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+              {keys.map((key) => (
+                <TableRow key={key.accessKey}>
+                  <TableCell className="font-medium">{key.name}</TableCell>
+                  <TableCell>
+                    <code className="rounded bg-muted px-2 py-1 text-xs font-mono">
+                      {key.accessKey}
+                    </code>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {new Date(key.createdAt).toLocaleDateString('id-ID')}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => deleteKey(key.accessKey)}
+                    >
+                      Hapus
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -307,6 +224,5 @@ export function ApiKeys() {
         </div>
       )}
     </div>
-    </ErrorBoundary>
   )
 }
