@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import { useNavigate, Link } from 'react-router'
 import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Link } from 'react-router'
 
 export function Login() {
   const { signIn } = useAuth()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -18,7 +19,11 @@ export function Login() {
     setLoading(true)
     setError(null)
     const { error } = await signIn(email, password)
-    if (error) setError(error)
+    if (error) {
+      setError(error)
+    } else {
+      navigate('/todos', { replace: true })
+    }
     setLoading(false)
   }
 
