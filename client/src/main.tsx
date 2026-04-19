@@ -2,6 +2,14 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { User, KeyRound, LogOut } from 'lucide-react'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import { Home } from './pages/Home'
 import { Login } from './pages/Login'
@@ -19,25 +27,34 @@ function Navbar() {
         <Link to="/">
           <Button variant="ghost" size="sm">Home</Button>
         </Link>
-        {user && (
-          <>
-            <Link to="/todos">
-              <Button variant="ghost" size="sm">Todos</Button>
-            </Link>
-            <Link to="/api-keys">
-              <Button variant="ghost" size="sm">API Keys</Button>
-            </Link>
-          </>
-        )}
       </div>
       <div className="flex items-center gap-2">
         {user ? (
-          <>
-            <span className="text-sm text-muted-foreground">{user.email}</span>
-            <Button variant="outline" size="sm" onClick={signOut}>
-              Logout
-            </Button>
-          </>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="rounded-full">
+                <User className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <div className="px-2 py-1.5 text-sm font-medium truncate">{user.email}</div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/api-keys" className="flex items-center gap-2">
+                  <KeyRound className="h-4 w-4" />
+                  API Keys
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive flex items-center gap-2"
+                onClick={() => signOut()}
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <>
             <Link to="/login">
