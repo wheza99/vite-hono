@@ -90,29 +90,29 @@ export function ApiKeys() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4">
+    <div className="max-w-7xl mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">🔑 API Keys</h1>
+          <h1 className="text-2xl font-bold">API Keys</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Kelola API key untuk akses public API
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) closeDialog() }}>
           <DialogTrigger asChild>
-            <Button>+ Buat API Key</Button>
+            <Button>Buat API Key</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {newKeyResult ? 'API Key Dibuat! ✅' : 'Buat API Key Baru'}
+                {newKeyResult ? 'API Key Dibuat!' : 'Buat API Key Baru'}
               </DialogTitle>
             </DialogHeader>
 
             {newKeyResult ? (
               <div className="space-y-4">
                 <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                  ⚠️ Copy secret key sekarang! Tidak akan ditampilkan lagi.
+                  Copy secret key sekarang! Tidak akan ditampilkan lagi.
                 </div>
 
                 <div className="space-y-2">
@@ -182,7 +182,7 @@ export function ApiKeys() {
       ) : keys.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <p>Belum ada API key.</p>
-          <p className="text-sm mt-1">Klik "+ Buat API Key" untuk mulai.</p>
+          <p className="text-sm mt-1">Klik "Buat API Key" untuk mulai.</p>
         </div>
       ) : (
         <div className="rounded-md border">

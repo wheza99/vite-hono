@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router'
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { User, KeyRound, LogOut } from 'lucide-react'
+import { User, KeyRound, LogOut, CheckSquare } from 'lucide-react'
 import { AuthProvider, useAuth } from '@/lib/auth'
 import { Home } from './pages/Home'
 import { Login } from './pages/Login'
@@ -20,6 +20,7 @@ import './index.css'
 
 function Navbar() {
   const { user, signOut } = useAuth()
+  const navigate = useNavigate()
 
   return (
     <nav className="flex items-center justify-between px-6 py-3 border-b">
@@ -27,6 +28,11 @@ function Navbar() {
         <Link to="/">
           <Button variant="ghost" size="sm">Home</Button>
         </Link>
+        {user && (
+          <Link to="/todos">
+            <Button variant="ghost" size="sm">Todos</Button>
+          </Link>
+        )}
       </div>
       <div className="flex items-center gap-2">
         {user ? (
@@ -36,14 +42,15 @@ function Navbar() {
                 <User className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-56">
               <div className="px-2 py-1.5 text-sm font-medium truncate">{user.email}</div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/api-keys" className="flex items-center gap-2">
-                  <KeyRound className="h-4 w-4" />
-                  API Keys
-                </Link>
+              <DropdownMenuItem
+                className="flex items-center gap-2"
+                onClick={() => navigate('/api-keys')}
+              >
+                <KeyRound className="h-4 w-4" />
+                API Keys
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
