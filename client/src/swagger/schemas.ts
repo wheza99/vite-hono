@@ -13,7 +13,7 @@ export const schemas = {
       data: { type: 'array', items: { type: 'object' } },
     },
   },
-  ResponseError: {
+  ErrorResponse: {
     type: 'object',
     properties: {
       error: { type: 'string' },

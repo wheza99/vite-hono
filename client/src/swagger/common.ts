@@ -18,11 +18,9 @@ export const info = {
 
 export const servers = [
   {
-    url: 'http://localhost:3000',
-    description: 'Local Development',
+    url: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+    description: import.meta.env.VITE_API_URL ? 'Production' : 'Local Development',
   },
-  // Add production server here after deploy:
-  // { url: 'https://your-app.example.com', description: 'Production' },
 ]
 
 export const securitySchemes = {

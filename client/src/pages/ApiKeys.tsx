@@ -66,15 +66,25 @@ function SwaggerDocs({ apiKey }: { apiKey: string }) {
       showCommonExtensions: true,
     })
 
-    // Pre-authorize with user's API Key
+    // Pre-authorize with API Key if available
     if (apiKey) {
       ui.preauthorizeApiKey('apiKeyAuth', apiKey)
     }
   }, [apiKey])
 
   return (
-    <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden bg-white">
-      <div ref={swaggerRef} />
+    <div className="space-y-4">
+      {/* Guide for users */}
+      <div className="rounded-md bg-muted/50 border px-4 py-3 text-sm text-muted-foreground flex gap-2">
+        <TriangleAlert className="h-4 w-4 mt-0.5 shrink-0" />
+        <span>
+          Klik tombol <strong>Authorize</strong> (gembok 🔒) di atas, lalu paste API Key kamu (format: <code className="bg-muted px-1 rounded">sk-xxxx...</code>) ke kolom X-Api-Key.
+          {apiKey && ' API Key kamu sudah otomatis diisi.'}
+        </span>
+      </div>
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden bg-white">
+        <div ref={swaggerRef} />
+      </div>
     </div>
   )
 }
