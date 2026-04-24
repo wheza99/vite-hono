@@ -82,7 +82,7 @@ function SwaggerDocs({ apiKey }: { apiKey: string }) {
           {apiKey && ' API Key kamu sudah otomatis diisi.'}
         </span>
       </div>
-      <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden bg-white">
+      <div className="swagger-ui-wrapper rounded-lg border bg-card text-card-foreground shadow-sm bg-white">
         <div ref={swaggerRef} />
       </div>
     </div>

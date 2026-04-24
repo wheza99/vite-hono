@@ -133,8 +133,10 @@ html {
     }
 }
 
-/* Swagger UI: keep topbar below shadcn dialogs */
-.swagger-ui .topbar {
-  position: relative !important;
-  z-index: 0 !important;
+/* Swagger UI: keep everything below shadcn dialogs (z-50) */
+.swagger-ui-wrapper {
+  isolation: isolate;
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
 }
