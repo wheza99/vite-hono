@@ -291,21 +291,7 @@ export function ApiKeys() {
 
         {/* ── Docs Tab ──────────────────────────────────────── */}
         <TabsContent value="docs" className="mt-6">
-          {newKeyResult ? (
-            <SwaggerDocs apiKey={newKeyResult.rawKey} />
-          ) : keys.length > 0 ? (
-            <div className="text-center py-12 text-muted-foreground border rounded-md">
-              <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>Buat API Key terlebih dahulu.</p>
-              <p className="text-sm mt-1">Klik "Buat API Key" lalu kembali ke tab ini untuk mencoba API.</p>
-            </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground border rounded-md">
-              <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>Belum ada API key.</p>
-              <p className="text-sm mt-1">Buat API Key terlebih dahulu untuk mengakses dokumentasi interaktif.</p>
-            </div>
-          )}
+          <SwaggerDocs apiKey={newKeyResult?.rawKey || ''} />
         </TabsContent>
       </Tabs>
     </div>
