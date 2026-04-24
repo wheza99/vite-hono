@@ -47,10 +47,8 @@ interface NewKeyResponse {
 
 // ── Swagger sub-component ───────────────────────────────────
 
-function SwaggerDocs() {
+function SwaggerDocs({ apiKey }: { apiKey: string }) {
   const swaggerRef = useRef<HTMLDivElement>(null)
-  const { session } = useAuth()
-  const token = session?.access_token
 
   useEffect(() => {
     if (!swaggerRef.current) return
@@ -66,18 +64,13 @@ function SwaggerDocs() {
       deepLinking: true,
       showExtensions: true,
       showCommonExtensions: true,
-      requestInterceptor: (request: any) => {
-        if (token) {
-          request.headers.Authorization = `Bearer ${token}`
-        }
-        return request
-      },
     })
 
-    if (token) {
-      ui.preauthorizeApiKey('bearerAuth', token)
+    // Pre-authorize with user's API Key
+    if (apiKey) {
+      ui.preauthorizeApiKey('apiKeyAuth', apiKey)
     }
-  }, [token])
+  }, [apiKey])
 
   return (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden bg-white">
@@ -298,7 +291,21 @@ export function ApiKeys() {
 
         {/* ── Docs Tab ──────────────────────────────────────── */}
         <TabsContent value="docs" className="mt-6">
-          <SwaggerDocs />
+          {newKeyResult ? (
+            <SwaggerDocs apiKey={newKeyResult.rawKey} />
+          ) : keys.length > 0 ? (
+            <div className="text-center py-12 text-muted-foreground border rounded-md">
+              <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>Buat API Key terlebih dahulu.</p>
+              <p className="text-sm mt-1">Klik "Buat API Key" lalu kembali ke tab ini untuk mencoba API.</p>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground border rounded-md">
+              <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>Belum ada API key.</p>
+              <p className="text-sm mt-1">Buat API Key terlebih dahulu untuk mengakses dokumentasi interaktif.</p>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

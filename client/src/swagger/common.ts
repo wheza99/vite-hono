@@ -1,14 +1,15 @@
 /**
  * OpenAPI Common Config
  *
- * Edit this file to match your app's identity.
- * This is the shared foundation for the Swagger spec.
+ * This Swagger docs is for PUBLIC API consumers.
+ * They authenticate with API Key (X-Api-Key header).
+ * Private/internal JWT routes are NOT documented here.
  */
 
 export const info = {
-  title: 'Vite Hono API',
+  title: 'Public API',
   description:
-    'Public API documentation. Use your API Key (X-Api-Key header) to authenticate.',
+    'API documentation for external consumers. Authenticate with your API Key via the X-Api-Key header.',
   version: '1.0.0',
   contact: {
     email: 'dev@example.com',
@@ -25,19 +26,12 @@ export const servers = [
 ]
 
 export const securitySchemes = {
-  bearerAuth: {
-    type: 'http',
-    scheme: 'bearer',
-    bearerFormat: 'JWT',
-    description: 'Supabase JWT token (for dashboard/user routes)',
-  },
   apiKeyAuth: {
     type: 'apiKey',
     in: 'header',
     name: 'X-Api-Key',
-    description: 'API Key from /api-keys page (for public API routes)',
+    description: 'API Key from the Keys tab. Format: sk-xxxx...',
   },
 }
 
-export const securityJwt = [{ bearerAuth: [] }]
 export const securityApiKey = [{ apiKeyAuth: [] }]
