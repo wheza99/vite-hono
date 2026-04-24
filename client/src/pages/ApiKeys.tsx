@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/lib/auth'
 import { authFetch } from '@/lib/api'
 import {
@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Dialog,
   DialogContent,
@@ -19,8 +20,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Copy, Check, Trash2, TriangleAlert } from 'lucide-react'
+import { Copy, Check, Trash2, TriangleAlert, KeyRound, FileText } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
+import SwaggerUIBundle from 'swagger-ui-dist/swagger-ui-bundle'
+import 'swagger-ui-dist/swagger-ui.css'
+import { swaggerSpec } from '@/swagger/spec'
 
 interface ApiKey {
   id: string
@@ -40,6 +44,52 @@ interface NewKeyResponse {
   createdAt: string
   rawKey: string
 }
+
+// ── Swagger sub-component ───────────────────────────────────
+
+function SwaggerDocs({ apiKey }: { apiKey: string }) {
+  const swaggerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!swaggerRef.current) return
+
+    const ui = SwaggerUIBundle({
+      spec: swaggerSpec,
+      domNode: swaggerRef.current,
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIBundle.SwaggerUIStandalonePreset,
+      ],
+      layout: 'BaseLayout',
+      deepLinking: true,
+      showExtensions: true,
+      showCommonExtensions: true,
+    })
+
+    // Pre-authorize with API Key if available
+    if (apiKey) {
+      ui.preauthorizeApiKey('apiKeyAuth', apiKey)
+    }
+  }, [apiKey])
+
+  return (
+    <div className="space-y-4">
+      {/* Guide for users */}
+      <div className="rounded-md bg-muted/50 border px-4 py-3 text-sm text-muted-foreground flex gap-2">
+        <TriangleAlert className="h-4 w-4 mt-0.5 shrink-0" />
+        <span>
+          Klik tombol <strong>Authorize</strong> (gembok 🔒) di atas, lalu paste API Key kamu (format: <code className="bg-muted px-1 rounded">sk-xxxx...</code>) ke kolom X-Api-Key.
+          {apiKey && ' API Key kamu sudah otomatis diisi.'}
+        </span>
+      </div>
+      <div className="swagger-ui-wrapper rounded-lg border bg-card text-card-foreground shadow-sm bg-white">
+        <div ref={swaggerRef} />
+      </div>
+    </div>
+  )
+}
+
+// ── Main Component ──────────────────────────────────────────
 
 export function ApiKeys() {
   const { user } = useAuth()
@@ -103,14 +153,17 @@ export function ApiKeys() {
     <div className="max-w-7xl mx-auto py-8 px-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">API Keys</h1>
+          <h1 className="text-2xl font-bold">API</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Kelola API key untuk akses public API
+            Kelola API key dan baca dokumentasi
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) closeDialog() }}>
           <DialogTrigger asChild>
-            <Button>Buat API Key</Button>
+            <Button>
+              <KeyRound className="h-4 w-4 mr-2" />
+              Buat API Key
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -169,66 +222,88 @@ export function ApiKeys() {
         </Dialog>
       </div>
 
-      {loading ? (
-        <p className="text-center text-muted-foreground py-8">Loading...</p>
-      ) : keys.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <p>Belum ada API key.</p>
-          <p className="text-sm mt-1">Klik "Buat API Key" untuk mulai.</p>
-        </div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-8 w-1/5">Nama</TableHead>
-                <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
-                <TableHead className="w-1/5">Key</TableHead>
-                <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
-                <TableHead className="w-1/5">Dibuat</TableHead>
-                <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
-                <TableHead className="w-1/5">Terakhir Digunakan</TableHead>
-                <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
-                <TableHead className="w-1/5"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {keys.map((key) => (
-                <TableRow key={key.id}>
-                  <TableCell className="pl-8 font-medium">{key.name}</TableCell>
-                  <TableCell></TableCell>
-                  <TableCell>
-                    <code className="rounded bg-muted px-2 py-1 text-xs font-mono">
-                      {key.keyPrefix}...{key.keySuffix}
-                    </code>
-                  </TableCell>
-                  <TableCell></TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(key.createdAt).toLocaleDateString('id-ID')}
-                  </TableCell>
-                  <TableCell></TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {key.lastUsedAt
-                      ? new Date(key.lastUsedAt).toLocaleDateString('id-ID')
-                      : '-'}
-                  </TableCell>
-                  <TableCell></TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => deleteKey(key.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <Tabs defaultValue="keys">
+        <TabsList>
+          <TabsTrigger value="keys" className="flex items-center gap-2">
+            <KeyRound className="h-4 w-4" />
+            Keys
+          </TabsTrigger>
+          <TabsTrigger value="docs" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Docs
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ── Keys Tab ──────────────────────────────────────── */}
+        <TabsContent value="keys" className="mt-6">
+          {loading ? (
+            <p className="text-center text-muted-foreground py-8">Loading...</p>
+          ) : keys.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <KeyRound className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>Belum ada API key.</p>
+              <p className="text-sm mt-1">Klik "Buat API Key" untuk mulai.</p>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="pl-8 w-1/5">Nama</TableHead>
+                    <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                    <TableHead className="w-1/5">Key</TableHead>
+                    <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                    <TableHead className="w-1/5">Dibuat</TableHead>
+                    <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                    <TableHead className="w-1/5">Terakhir Digunakan</TableHead>
+                    <TableHead className="py-2"><Separator orientation="vertical" /></TableHead>
+                    <TableHead className="w-1/5"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {keys.map((key) => (
+                    <TableRow key={key.id}>
+                      <TableCell className="pl-8 font-medium">{key.name}</TableCell>
+                      <TableCell></TableCell>
+                      <TableCell>
+                        <code className="rounded bg-muted px-2 py-1 text-xs font-mono">
+                          {key.keyPrefix}...{key.keySuffix}
+                        </code>
+                      </TableCell>
+                      <TableCell></TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(key.createdAt).toLocaleDateString('id-ID')}
+                      </TableCell>
+                      <TableCell></TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {key.lastUsedAt
+                          ? new Date(key.lastUsedAt).toLocaleDateString('id-ID')
+                          : '-'}
+                      </TableCell>
+                      <TableCell></TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() => deleteKey(key.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ── Docs Tab ──────────────────────────────────────── */}
+        <TabsContent value="docs" className="mt-6">
+          <SwaggerDocs apiKey={newKeyResult?.rawKey || ''} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

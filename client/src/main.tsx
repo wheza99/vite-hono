@@ -15,6 +15,7 @@ import { HeroSection } from './pages/HeroSection'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
+import { DashboardDetail } from './pages/DashboardDetail'
 import { ApiKeys } from './pages/ApiKeys'
 import { Billing } from './pages/Billing'
 import './index.css'
@@ -119,6 +120,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/todos/detail"
+            element={
+              <ProtectedRoute>
+                <DashboardDetail />
               </ProtectedRoute>
             }
           />
