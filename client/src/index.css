@@ -132,3 +132,9 @@ html {
     @apply font-sans;
     }
 }
+
+/* Swagger UI: keep topbar below shadcn dialogs */
+.swagger-ui .topbar {
+  position: relative !important;
+  z-index: 0 !important;
+}
