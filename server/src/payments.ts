@@ -1,28 +1,18 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { pbCreate, pbList, pbFirst, pbUpdate } from './pb'
 
 /**
- * Payments Management — Tripay integration
- *
- * Flow:
- * 1. User create top-up request → INSERT to payments (status: 'open')
- * 2. Server calls Tripay API to create transaction
- * 3. Tripay callback → server updates status via service role (bypass RLS)
- * 4. If paid → add credits to user
- *
- * Status: open → paid / void / expired
+ * Payments Management — Tripay integration + PocketBase
  */
 
 // ── CRUD ───────────────────────────────────────────────────
 
 export async function createPayment(
-  supabase: SupabaseClient,
   userId: string,
   userEmail: string,
   amount: number,
   method: string = 'QRIS',
   returnUrl: string = ''
 ) {
-  // Validate amount
   if (!amount || amount < 1000) {
     throw new Error('Minimum top up Rp 1.000')
   }
@@ -34,15 +24,12 @@ export async function createPayment(
   }
 
   const baseUrl = TRIPAY_API_URL || 'https://tripay.co.id/api'
-
   const crypto = await import('crypto')
   const axios = (await import('axios')).default
 
   const timestamp = Math.floor(Date.now() / 1000)
   const random = Math.floor(Math.random() * 10000)
   const merchant_ref = `TOPUP-${timestamp}-${random}`
-
-  const apiUrl = `${baseUrl}/transaction/create`
 
   const signature = crypto
     .createHmac('sha256', TRIPAY_PRIVATE_KEY)
@@ -51,8 +38,7 @@ export async function createPayment(
 
   const expiredTime = Math.floor(Date.now() / 1000) + (24 * 60 * 60)
 
-  // Create Tripay transaction
-  const response = await axios.post(apiUrl, {
+  const response = await axios.post(`${baseUrl}/transaction/create`, {
     method,
     merchant_ref,
     amount,
@@ -77,69 +63,40 @@ export async function createPayment(
     throw new Error(response.data.message || 'Failed to create Tripay transaction')
   }
 
-  // Save to DB
-  const { data, error } = await supabase
-    .from('payments')
-    .insert({
-      user_id: userId,
-      amount,
-      status: 'open',
-      url: response.data.data?.checkout_url,
-      metadata: {
-        merchant_ref,
-        method,
-        qr_url: response.data.data?.qr_url,
-        reference: response.data.data?.reference,
-        tripay_response: response.data.data,
-      },
-    })
-    .select('id, amount, status, url, metadata, created_at')
-    .single()
-
-  if (error) throw new Error(error.message)
+  const data = await pbCreate('payments', {
+    user_id: userId,
+    amount,
+    status: 'open',
+    url: response.data.data?.checkout_url || '',
+    metadata: {
+      merchant_ref,
+      method,
+      qr_url: response.data.data?.qr_url,
+      reference: response.data.data?.reference,
+      tripay_response: response.data.data,
+    },
+  })
 
   return data
 }
 
-export async function listPayments(supabase: SupabaseClient, userId: string) {
-  const { data, error } = await supabase
-    .from('payments')
-    .select('id, amount, status, url, metadata, created_at')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-
-  if (error) throw new Error(error.message)
-  return data
+export async function listPayments(userId: string) {
+  const items = await pbList('payments', `user_id='${userId}'`, '-created')
+  return items
 }
 
-export async function getPayment(supabase: SupabaseClient, userId: string, paymentId: string) {
-  const { data, error } = await supabase
-    .from('payments')
-    .select('id, amount, status, url, metadata, created_at')
-    .eq('id', paymentId)
-    .eq('user_id', userId)
-    .single()
-
-  if (error) throw new Error('Payment not found')
+export async function getPayment(userId: string, paymentId: string) {
+  const data = await pbFirst('payments', `id='${paymentId}' && user_id='${userId}'`)
+  if (!data) throw new Error('Payment not found')
   return data
 }
 
 /**
  * Check payment status from Tripay and update DB
- * Uses service role client (bypass RLS)
  */
-export async function checkAndUpdatePaymentStatus(
-  supabaseAdmin: SupabaseClient,
-  paymentId: string
-) {
-  // Get payment
-  const { data: payment, error } = await supabaseAdmin
-    .from('payments')
-    .select('id, user_id, amount, status, metadata')
-    .eq('id', paymentId)
-    .single()
-
-  if (error || !payment) throw new Error('Payment not found')
+export async function checkAndUpdatePaymentStatus(paymentId: string) {
+  const payment = await pbFirst('payments', `id='${paymentId}'`)
+  if (!payment) throw new Error('Payment not found')
   if (payment.status !== 'open') return payment
 
   const tripayRef = payment.metadata?.reference
@@ -147,7 +104,6 @@ export async function checkAndUpdatePaymentStatus(
 
   const TRIPAY_API_KEY = process.env.TRIPAY_API_KEY!
   const baseUrl = process.env.TRIPAY_API_URL || 'https://tripay.co.id/api'
-
   const axios = (await import('axios')).default
 
   const response = await axios.get(`${baseUrl}/transaction/detail`, {
@@ -173,44 +129,30 @@ export async function checkAndUpdatePaymentStatus(
 
   if (newStatus === 'open') return payment
 
-  // Update payment status via service role
-  const { data: updatedPayment } = await supabaseAdmin
-    .from('payments')
-    .update({ status: newStatus })
-    .eq('id', paymentId)
-    .select('id, amount, status, url, metadata, created_at')
-    .single()
+  const updatedPayment = await pbUpdate('payments', paymentId, { status: newStatus })
 
   // If PAID → add credits + create transaction
   if (tripayStatus === 'PAID') {
-    // Add credits (upsert)
-    const { data: existingCredit } = await supabaseAdmin
-      .from('credits')
-      .select('id, total')
-      .eq('user_id', payment.user_id)
-      .single()
+    const existingCredit = await pbFirst('credits', `user_id='${payment.user_id}'`)
 
     if (existingCredit) {
-      await supabaseAdmin
-        .from('credits')
-        .update({ total: (existingCredit.total || 0) + payment.amount, updated_at: new Date().toISOString() })
-        .eq('id', existingCredit.id)
+      await pbUpdate('credits', existingCredit.id, {
+        total: (existingCredit.total || 0) + payment.amount,
+      })
     } else {
-      await supabaseAdmin
-        .from('credits')
-        .insert({ user_id: payment.user_id, total: payment.amount })
+      await pbCreate('credits', {
+        user_id: payment.user_id,
+        total: payment.amount,
+      })
     }
 
-    // Create transaction record
-    await supabaseAdmin
-      .from('transactions')
-      .insert({
-        user_id: payment.user_id,
-        description: 'Credit Top Up',
-        amount: payment.amount,
-        type: 'credit',
-        metadata: { payment_id: payment.id },
-      })
+    await pbCreate('transactions', {
+      user_id: payment.user_id,
+      description: 'Credit Top Up',
+      amount: payment.amount,
+      type: 'credit',
+      metadata: { payment_id: payment.id },
+    })
   }
 
   return updatedPayment || payment

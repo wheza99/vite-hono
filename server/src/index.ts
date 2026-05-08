@@ -3,33 +3,60 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
-import { createClient } from '@supabase/supabase-js'
+import { verifyUserToken, pbList, pbFirst, pbCreate } from './pb'
 import { createApiKey, listApiKeys, deleteApiKey, verifyApiKey } from './api-keys'
 import { createPayment, listPayments, getPayment, checkAndUpdatePaymentStatus } from './payments'
 
 // ── Env config ──────────────────────────────────────────────
-const SUPABASE_URL = process.env.SUPABASE_URL || ''
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || ''
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 const PORT = Number(process.env.PORT) || 3000
-
-// Anon client (for user operations with JWT + RLS)
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-// Service role client (bypasses RLS, for verify API key)
-const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+const PB_INTERNAL = process.env.POCKETBASE_URL || 'http://localhost:8090'
 
 const app = new Hono()
 
 // ── CORS ────────────────────────────────────────────────────
 app.use('/api/*', cors())
+app.use('/pb/*', cors())
+
+// ═══════════════════════════════════════════════════════════
+// POCKETBASE PROXY
+// ═══════════════════════════════════════════════════════════
+
+app.all('/pb/*', async (c) => {
+  const path = c.req.path.replace(/^\/pb/, '')
+  const url = `${PB_INTERNAL}${path}${c.req.url.includes('?') ? '?' + c.req.url.split('?')[1] : ''}`
+
+  const method = c.req.method
+  const headers = new Headers()
+  const fwdHeaders = ['content-type', 'authorization', 'accept']
+  for (const h of fwdHeaders) {
+    const v = c.req.header(h)
+    if (v) headers.set(h, v)
+  }
+
+  const body = method !== 'GET' && method !== 'HEAD' ? await c.req.arrayBuffer() : undefined
+
+  const pbRes = await fetch(url, { method, headers, body })
+
+  const resHeaders = new Headers()
+  pbRes.headers.forEach((v, k) => {
+    if (!['content-encoding', 'content-length', 'transfer-encoding', 'content-security-policy'].includes(k.toLowerCase())) {
+      resHeaders.set(k, v)
+    }
+  })
+  resHeaders.set('Cache-Control', 'no-transform')
+
+  return new Response(pbRes.body, {
+    status: pbRes.status,
+    headers: resHeaders,
+  })
+})
 
 // ── Public routes ───────────────────────────────────────────
 app.get('/api/hello', (c) => {
   return c.json({ message: 'Hello from Hono! 🔥' })
 })
 
-// ── User Auth middleware (Supabase JWT) ─────────────────────
+// ── User Auth middleware (PocketBase token) ─────────────────
 async function userAuth(c: any, next: any) {
   const authHeader = c.req.header('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
@@ -37,20 +64,14 @@ async function userAuth(c: any, next: any) {
   }
 
   const token = authHeader.replace('Bearer ', '')
+  const user = await verifyUserToken(token)
 
-  // Create client with user's JWT for RLS
-  const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  })
-
-  const { data: { user }, error } = await userSupabase.auth.getUser(token)
-
-  if (error || !user) {
-    return c.json({ error: 'Invalid token' }, 401)
+  if (!user) {
+    return c.json({ error: 'Invalid or expired token' }, 401)
   }
 
   c.set('user', user)
-  c.set('supabase', userSupabase)
+  c.set('token', token)
   await next()
 }
 
@@ -62,7 +83,7 @@ async function apiKeyAuth(c: any, next: any) {
     return c.json({ error: 'Missing API key. Send X-Api-Key header.' }, 401)
   }
 
-  const keyInfo = await verifyApiKey(supabaseAdmin, rawKey)
+  const keyInfo = await verifyApiKey(rawKey)
   if (!keyInfo) {
     return c.json({ error: 'Invalid or expired API key' }, 401)
   }
@@ -73,7 +94,7 @@ async function apiKeyAuth(c: any, next: any) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// USER AUTH ROUTES (JWT dari Supabase)
+// USER AUTH ROUTES
 // ═══════════════════════════════════════════════════════════
 
 app.use('/api/me', userAuth)
@@ -123,11 +144,10 @@ app.delete('/api/todos/:id', (c) => {
 // ── Manage API Keys (user auth) ─────────────────────────────
 app.post('/api/keys', async (c) => {
   const user = c.get('user')
-  const db: ReturnType<typeof createClient> = c.get('supabase')
   const body = await c.req.json<{ name: string }>()
 
   try {
-    const key = await createApiKey(db, user.id, body.name || user.email)
+    const key = await createApiKey(user.id, body.name || user.email)
     return c.json(key, 201)
   } catch (err: any) {
     return c.json({ error: err.message }, 500)
@@ -136,10 +156,9 @@ app.post('/api/keys', async (c) => {
 
 app.get('/api/keys', async (c) => {
   const user = c.get('user')
-  const db: ReturnType<typeof createClient> = c.get('supabase')
 
   try {
-    const keys = await listApiKeys(db, user.id)
+    const keys = await listApiKeys(user.id)
     return c.json(keys)
   } catch (err: any) {
     return c.json({ error: err.message }, 500)
@@ -148,11 +167,10 @@ app.get('/api/keys', async (c) => {
 
 app.delete('/api/keys/:id', async (c) => {
   const user = c.get('user')
-  const db: ReturnType<typeof createClient> = c.get('supabase')
   const keyId = c.req.param('id')
 
   try {
-    await deleteApiKey(db, user.id, keyId)
+    await deleteApiKey(user.id, keyId)
     return c.json({ ok: true })
   } catch (err: any) {
     return c.json({ error: err.message }, 500)
@@ -160,17 +178,16 @@ app.delete('/api/keys/:id', async (c) => {
 })
 
 // ═══════════════════════════════════════════════════════════
-// PAYMENTS ROUTES (JWT dari Supabase)
+// PAYMENTS ROUTES
 // ═══════════════════════════════════════════════════════════
 
 app.post('/api/payments/topup', async (c) => {
   const user = c.get('user')
-  const db: ReturnType<typeof createClient> = c.get('supabase')
   const body = await c.req.json<{ amount: number; method?: string }>()
 
   try {
     const origin = c.req.header('origin') || process.env.APP_URL || 'http://localhost:5173'
-    const payment = await createPayment(db, user.id, user.email, body.amount, body.method, `${origin}/billing`)
+    const payment = await createPayment(user.id, user.email, body.amount, body.method, `${origin}/billing`)
     return c.json(payment, 201)
   } catch (err: any) {
     return c.json({ error: err.message }, 400)
@@ -179,10 +196,9 @@ app.post('/api/payments/topup', async (c) => {
 
 app.get('/api/payments', async (c) => {
   const user = c.get('user')
-  const db: ReturnType<typeof createClient> = c.get('supabase')
 
   try {
-    const payments = await listPayments(db, user.id)
+    const payments = await listPayments(user.id)
     return c.json(payments)
   } catch (err: any) {
     return c.json({ error: err.message }, 500)
@@ -191,14 +207,11 @@ app.get('/api/payments', async (c) => {
 
 app.get('/api/payments/:id/status', async (c) => {
   const user = c.get('user')
-  const db: ReturnType<typeof createClient> = c.get('supabase')
   const paymentId = c.req.param('id')
 
   try {
-    // Verify ownership
-    await getPayment(db, user.id, paymentId)
-    // Check and update status via service role
-    const payment = await checkAndUpdatePaymentStatus(supabaseAdmin, paymentId)
+    await getPayment(user.id, paymentId)
+    const payment = await checkAndUpdatePaymentStatus(paymentId)
     return c.json(payment)
   } catch (err: any) {
     return c.json({ error: err.message }, 400)
@@ -206,40 +219,27 @@ app.get('/api/payments/:id/status', async (c) => {
 })
 
 // ═══════════════════════════════════════════════════════════
-// CREDITS & TRANSACTIONS ROUTES (JWT dari Supabase)
+// CREDITS & TRANSACTIONS ROUTES
 // ═══════════════════════════════════════════════════════════
 
 app.get('/api/credits', async (c) => {
   const user = c.get('user')
-  const db: ReturnType<typeof createClient> = c.get('supabase')
 
   try {
-    const { data, error } = await db
-      .from('credits')
-      .select('total')
-      .eq('user_id', user.id)
-      .single()
-
-    if (error || !data) return c.json({ total: 0 })
-    return c.json(data)
-  } catch (err: any) {
+    const data = await pbFirst('credits', `user_id='${user.id}'`)
+    if (!data) return c.json({ total: 0 })
+    return c.json({ total: data.total })
+  } catch {
     return c.json({ total: 0 })
   }
 })
 
 app.get('/api/transactions', async (c) => {
   const user = c.get('user')
-  const db: ReturnType<typeof createClient> = c.get('supabase')
 
   try {
-    const { data, error } = await db
-      .from('transactions')
-      .select('id, description, amount, type, metadata, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-
-    if (error) throw new Error(error.message)
-    return c.json(data)
+    const items = await pbList('transactions', `user_id='${user.id}'`, '-created')
+    return c.json(items)
   } catch (err: any) {
     return c.json({ error: err.message }, 500)
   }
@@ -266,6 +266,15 @@ app.get('/api/public/stats', (c) => {
 // ── Production: serve React static files ────────────────────
 app.use('/assets/*', serveStatic({ root: './public' }))
 app.get('*', serveStatic({ root: './public' }))
+
+// SPA fallback: serve index.html for all non-API/non-asset routes
+app.get('*', async (c) => {
+  const path = c.req.path
+  if (path.startsWith('/api/') || path.startsWith('/pb/')) {
+    return c.notFound()
+  }
+  return serveStatic({ path: './index.html', root: './public' })(c, async () => c.notFound())
+})
 
 // ── Start server ────────────────────────────────────────────
 serve({ fetch: app.fetch, port: PORT }, (info) => {
