@@ -1,10 +1,16 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { supabase } from '@/lib/supabase'
-import type { User, Session } from '@supabase/supabase-js'
+import { pb } from '@/lib/pocketbase'
+
+interface PBUser {
+  id: string
+  email: string
+  name: string
+  avatar: string
+  [key: string]: any
+}
 
 interface AuthContextType {
-  user: User | null
-  session: Session | null
+  user: PBUser | null
   loading: boolean
   signUp: (email: string, password: string) => Promise<{ error: string | null }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
@@ -15,54 +21,77 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<PBUser | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Helper: read current user from authStore
+  function getCurrentUser(): PBUser | null {
+    if (pb.authStore.isValid && pb.authStore.record) {
+      return pb.authStore.record as PBUser
+    }
+    return null
+  }
+
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
+    // Set initial user from stored auth
+    const initialUser = getCurrentUser()
+    setUser(initialUser)
+    setLoading(false)
+
+    // Listen for auth changes (login, logout, token refresh)
+    const unsub = pb.authStore.onChange(() => {
+      const currentUser = getCurrentUser()
+      setUser(currentUser)
     })
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session)
-        setUser(session?.user ?? null)
-      }
-    )
-
-    return () => subscription.unsubscribe()
+    return () => {
+      if (typeof unsub === 'function') unsub()
+    }
   }, [])
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password })
-    return { error: error?.message ?? null }
+    try {
+      await pb.collection('users').create({
+        email,
+        password,
+        passwordConfirm: password,
+        name: email.split('@')[0],
+      })
+      // Auto-login after signup
+      await pb.collection('users').authWithPassword(email, password)
+      return { error: null }
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Registration failed'
+      return { error: message }
+    }
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
-  }
-
-  const signOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      await pb.collection('users').authWithPassword(email, password)
+      return { error: null }
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || 'Login failed'
+      return { error: message }
+    }
   }
 
   const signInWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
+    const authData = await pb.collection('users').authWithOAuth2({
       provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/todos`,
-      },
+      scopes: ['email', 'profile'],
     })
+    // Force update user state immediately
+    setUser(getCurrentUser())
+  }
+
+  const signOut = async () => {
+    pb.authStore.clear()
+    setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )
