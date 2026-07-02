@@ -1,19 +1,30 @@
 ---
 import DefaultLayout from "@/layouts/DefaultLayout.astro";
 import { THEME } from "@/styles/theme";
+import HowItWorks from "@/components/sections/HowItWorks";
+import Features from "@/components/sections/Features";
+import Showcase from "@/components/sections/Showcase";
+import Pricing from "@/components/sections/Pricing";
+import Faq from "@/components/sections/Faq";
+import BlogPreview from "@/components/sections/BlogPreview";
+import Cta from "@/components/sections/Cta";
 ---
 
 <DefaultLayout
   title={THEME.tagline}
   description={`${THEME.name} helps you streamline your workflow, collaborate with your team, and boost productivity.`}
 >
-  {/* ── M1 placeholder hero. The full homepage lands in Milestone 2. ── */}
+  {/* ════════════════════ Section 1: Hero ════════════════════ */}
   <section class="bg-dot-grid relative overflow-hidden border-b">
+    {/* soft accent spotlight over the dot grid */}
     <div
-      class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96 bg-gradient-to-b from-[color-mix(in_oklch,var(--primary)_8%,transparent)] to-transparent"
+      class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(55%_100%_at_50%_0%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent)]"
     >
     </div>
-    <div class="mx-auto flex max-w-4xl flex-col items-center px-6 py-28 text-center md:py-40">
+
+    <div
+      class="mx-auto flex max-w-4xl flex-col items-center px-6 pt-24 pb-16 text-center md:pt-32 md:pb-20"
+    >
       <a
         href="https://pabrikstartup.id"
         target="_blank"
@@ -25,7 +36,7 @@ import { THEME } from "@/styles/theme";
       </a>
 
       <h1
-        class="text-accent mt-6 text-balance text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl"
+        class="text-accent mt-6 text-balance text-5xl font-bold tracking-tight md:text-6xl lg:text-7xl"
       >
         {THEME.tagline}
       </h1>
@@ -38,7 +49,7 @@ import { THEME } from "@/styles/theme";
       <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
         <a
           href={THEME.appUrl}
-          class="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-[var(--accent-hover)]"
+          class="bg-primary text-primary-foreground hover:bg-[var(--accent-hover)] inline-flex h-11 items-center justify-center rounded-lg px-6 text-sm font-medium transition-colors"
         >
           Get Started
         </a>
@@ -54,5 +65,42 @@ import { THEME } from "@/styles/theme";
         14-day free trial. No obligations.
       </p>
     </div>
+
+    {/* abstract dashboard preview in a clean frame */}
+    <div class="mx-auto max-w-6xl px-6 pb-20 md:pb-28">
+      <div
+        class="bg-card ring-border/60 overflow-hidden rounded-2xl shadow-2xl shadow-primary/10 ring-1"
+      >
+        <img
+          src="/images/homepage/hero/dashboard-preview.svg"
+          alt={`${THEME.name} dashboard preview`}
+          width="1200"
+          height="750"
+          loading="eager"
+          class="block h-auto w-full"
+        />
+      </div>
+    </div>
   </section>
+
+  {/* ════════════════════ Section 2: How It Works ════════════════════ */}
+  <HowItWorks />
+
+  {/* ════════════════════ Section 3: Features ════════════════════ */}
+  <Features />
+
+  {/* ════════════════════ Section 4: Showcase ════════════════════ */}
+  <Showcase />
+
+  {/* ════════════════════ Section 5: Pricing ════════════════════ */}
+  <Pricing />
+
+  {/* ════════════════════ Section 6: FAQ ════════════════════ */}
+  <Faq client:visible />
+
+  {/* ════════════════════ Section 7: Blog ════════════════════ */}
+  <BlogPreview />
+
+  {/* ════════════════════ Section 8: CTA ════════════════════ */}
+  <Cta />
 </DefaultLayout>
