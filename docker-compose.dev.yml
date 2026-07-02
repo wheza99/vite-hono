@@ -1,0 +1,9 @@
+services:
+  pocketbase:
+    build: ./infra/pocketbase
+    ports:
+      - "${PB_PORT:-8090}:8090"
+    volumes:
+      - ./pb_data:/pb/pb_data
+      - ./infra/pocketbase/pb_migrations:/pb/pb_migrations
+    restart: unless-stopped

@@ -1,182 +1,88 @@
-# Vite + Hono
+# vite-hono
 
-Fullstack app template: Vite + React + Hono + shadcn/ui + Supabase Auth.
+Production-grade startup template: **React (Vite) + Hono + PocketBase**, organized as a pnpm monorepo with shared Zod types, schema-as-code migrations, credits/subscription billing via **Whop**, and one-command Docker deploy.
 
-## Quick Start
+Todos are the placeholder resource — clone this, replace todos with your real domain, and ship.
+
+## Stack
+
+| Layer    | Tech                                                     |
+| -------- | -------------------------------------------------------- |
+| Frontend | React 19, Vite, Tailwind 4, shadcn/ui, react-router      |
+| Backend  | Hono (Node), modular routes, Zod env validation          |
+| Database | PocketBase (auth, data, admin UI) — JS migrations        |
+| Billing  | Whop (USD subscription, checkout embed + webhook)        |
+| Deploy   | Docker Compose: Caddy (HTTPS) + PB + server + static web |
+
+## Structure
+
+```
+apps/
+  web/        # @vite-hono/web — React SPA (shadcn ui + pattern atoms + swagger docs)
+  server/     # @vite-hono/server — Hono API + PB proxy + billing + credits
+packages/
+  shared/     # @vite-hono/shared — Zod schemas shared by web & server
+infra/
+  pocketbase/ # PB Dockerfile + pb_migrations (schema as code)
+docker-compose.yml      # production: caddy + pb + server + web build
+docker-compose.dev.yml  # dev: PocketBase only
+Caddyfile               # HTTPS + reverse proxy (/api → server, /pb → PB)
+```
+
+## Quick start (dev)
 
 ```bash
-# Install dependencies
-npm install && cd client && npm install && cd ../server && npm install
+pnpm install
 
-# Setup env
-cp client/.env.example client/.env
-# Isi VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL
+# 1. Start PocketBase (applies migrations automatically)
+docker compose -f docker-compose.dev.yml up -d
+# port taken? PB_PORT=8094 docker compose -f docker-compose.dev.yml up -d
 
-# Dev (2 servers: Vite + Hono)
-npm run dev
+# 2. Create the PB superuser (used by the server for admin operations)
+docker exec vite-hono-pocketbase-1 /pb/pocketbase superuser upsert dev@vite-hono.local devpassword123 --dir=/pb/pb_data
 
-# Docker
-npm run docker:build && npm run docker:up
+# 3. Configure the server
+cp apps/server/.env.example apps/server/.env   # matches the credentials above
+
+# 4. Run web + server
+pnpm dev
 ```
 
-## Struktur File
+- Web: http://localhost:5173
+- API: http://localhost:3000/api/hello
+- PB Admin: http://localhost:8090/_/
+- PB via proxy: http://localhost:3000/pb/api/health
 
-```
-vite-hono/
-├── .dockerignore                    # File yang diabaikan saat Docker build
-├── .env.example                     # Template env variable untuk Docker production
-├── .gitignore                       # File yang diabaikan oleh Git
-├── Dockerfile                       # Multi-stage build: build React lalu serve via Hono
-├── docker-compose.yml               # Konfigurasi Docker Compose dengan auto port range
-├── package.json                     # Root scripts: dev, build, docker commands
-├── README.md                        # Dokumentasi project ini
-│
-├── types/schema/                    # SQL schema untuk Supabase
-│   ├── api_keys.sql                 # Table api_keys: key_hash, key_prefix, key_suffix, RLS
-│   ├── credits.sql                  # Table credits: user balance, RLS (read only)
-│   ├── payments.sql                 # Table payments: Tripay integration, RLS (no update/delete)
-│   ├── transactions.sql             # Table transactions: credit/debit ledger, RLS (read only)
-│   └── users.sql                    # Table users: profile data linked to auth.users
-│
-├── client/                          # Frontend — Vite + React + shadcn/ui
-│   ├── .env                         # Supabase URL, anon key, API URL (tidak di-commit)
-│   ├── .env.example                 # Template env variable untuk client
-│   ├── components.json              # Konfigurasi shadcn/ui (base-nova style)
-│   ├── index.html                   # Entry point HTML
-│   ├── package.json                 # Dependencies: React, Vite, shadcn, Supabase, Swagger
-│   ├── tsconfig.json                # TypeScript config dengan @ alias
-│   ├── vite.config.ts               # Vite config: React, Tailwind, proxy ke Hono server
-│   ├── public/
-│   │   ├── logo.png                 # Logo aplikasi (circular crop di navbar)
-│   │   └── favicon.png              # Favicon browser (circular crop dari logo)
-│   └── src/
-│       ├── index.css                # Tailwind CSS v4 + shadcn CSS variables + oklch colors
-│       ├── main.tsx                 # Root component: routing, auth provider, navbar
-│       │
-│       ├── components/
-│       │   ├── ui/                  # shadcn/ui components (auto-generated, jangan edit manual)
-│       │   │   ├── alert-dialog.tsx
-│       │   │   ├── badge.tsx
-│       │   │   ├── button.tsx
-│       │   │   ├── card.tsx
-│       │   │   ├── checkbox.tsx
-│       │   │   ├── dialog.tsx
-│       │   │   ├── dropdown-menu.tsx
-│       │   │   ├── input.tsx
-│       │   │   ├── label.tsx
-│       │   │   ├── separator.tsx
-│       │   │   ├── sheet.tsx        # Side panel untuk view/create/edit
-│       │   │   ├── switch.tsx
-│       │   │   ├── table.tsx
-│       │   │   └── tabs.tsx
-│       │   │
-│       │   └── patterns/            # Styling atoms (import dan pakai, jangan generate ulang)
-│       │       ├── stats-card.tsx   # Stat display: value + label + optional color
-│       │       ├── search-bar.tsx   # Search input dengan icon
-│       │       ├── pagination.tsx   # Page navigation (prev/next + page numbers)
-│       │       ├── empty-state.tsx  # Empty state dengan icon + search variant
-│       │       ├── status-badge.tsx # Configurable status badge
-│       │       ├── config-field.tsx # Readonly field dengan copy button
-│       │       └── file-upload.tsx  # Drag-drop file upload dengan preview
-│       │
-│       ├── lib/
-│       │   ├── api.ts               # Helper fetch yang otomatis kirim JWT token
-│       │   ├── auth.tsx             # AuthProvider + useAuth (email, Google OAuth)
-│       │   ├── supabase.ts          # Inisialisasi Supabase client
-│       │   └── utils.ts             # Utility cn() untuk merge Tailwind classes
-│       │
-│       ├── swagger/                 # OpenAPI 3.0 spec untuk Public API documentation
-│       │   ├── common.ts            # Config: info, servers (from env), securitySchemes
-│       │   ├── schemas.ts           # Response/request model definitions
-│       │   ├── spec.ts              # Composer: merge semua parts jadi spec
-│       │   └── paths/
-│       │       └── public.ts        # Public API endpoints (API Key auth)
-│       │
-│       └── pages/
-│           ├── HeroSection.tsx       # Landing page: hero section + footer
-│           ├── Login.tsx             # Login: email/password + Google OAuth
-│           ├── Register.tsx          # Register: email/password + Google OAuth
-│           ├── Dashboard.tsx         # LIST PAGE reference: search, stats, table, pagination, sheet
-│           ├── DashboardDetail.tsx   # DETAIL PAGE reference: back, tabs, child table, sheet→dialog
-│           ├── ApiKeys.tsx           # API management: Keys tab + Docs tab (Swagger UI)
-│           └── Billing.tsx           # Billing: credits, Tripay top-up, payment & transaction tabs
-│
-└── server/                          # Backend — Hono (production Docker)
-    ├── .env                         # Env: Supabase + Tripay keys (tidak di-commit)
-    ├── package.json                 # Dependencies: Hono, Supabase, @hono/node-server
-    ├── tsconfig.json                # TypeScript config untuk server
-    └── src/
-        ├── index.ts                 # Hono server: routes, dual auth middleware, static files
-        ├── api-keys.ts              # API key management: SHA-256 hash, create, verify, delete
-        └── payments.ts              # Tripay integration: create transaction, check status, add credits
+## Production (Docker)
+
+```bash
+cp .env.example .env   # set admin credentials, DOMAIN, Whop keys
+docker compose up -d
 ```
 
-## API Endpoints
+Caddy serves the static web build, proxies `/api/*` to the Hono server and `/pb/*` to PocketBase, with automatic HTTPS for `DOMAIN`.
 
-### User Auth Routes (JWT)
+## Architecture notes
 
-| Method | Path                     | Deskripsi                       |
-| ------ | ------------------------ | ------------------------------- |
-| GET    | `/api/me`                | Info user yang login            |
-| GET    | `/api/todos`             | List semua todos                |
-| POST   | `/api/todos`             | Tambah todo baru                |
-| PUT    | `/api/todos/:id`         | Update todo                     |
-| DELETE | `/api/todos/:id`         | Hapus todo                      |
-| POST   | `/api/keys`              | Buat API key baru               |
-| GET    | `/api/keys`              | List semua API keys             |
-| DELETE | `/api/keys/:id`          | Hapus API key                   |
-| POST   | `/api/payments/topup`    | Buat payment top-up (Tripay)    |
-| GET    | `/api/payments`          | List payment history            |
-| GET    | `/api/payments/:id/status` | Check & update payment status |
-| GET    | `/api/credits`           | Get current credit balance      |
-| GET    | `/api/transactions`      | List transaction history        |
+- **PB proxy** — the browser talks to PocketBase only through `/pb/*` on the server (or Caddy); the PB URL is never exposed.
+- **Auth** — PocketBase auth (email/password + Google OAuth via `authWithOAuth2`). The server verifies bearer tokens against PB with a 5-minute cache (`apps/server/src/lib/pocketbase.ts`).
+- **API keys** — `sk-…` keys hashed with SHA-256, verified via `X-Api-Key` for `/api/public/*` routes.
+- **Credits** — free plan: 3/month, pro: 100/month, lazily reset (`apps/server/src/lib/credits.ts`). Every change writes a `transactions` record.
+- **Billing** — `POST /api/billing/checkout` creates a Whop checkout session rendered by `WhopCheckoutEmbed`; `POST /api/webhooks/whop` (signature-verified) flips the user's plan. Unset Whop env vars → billing endpoints return 503, everything else works.
+- **Schema** — collections and security rules live in `infra/pocketbase/pb_migrations/` and apply automatically at PB boot. Client access is locked down per-user; billing fields and transactions are server-only writes.
+- **Shared types** — request/response schemas in `packages/shared` (Zod), imported by both apps; the server validates request bodies with them.
 
-### Public API Routes (API Key)
+## Scripts
 
-| Method | Path                    | Deskripsi                       |
-| ------ | ----------------------- | ------------------------------- |
-| GET    | `/api/public/todos`     | List todos milik API key owner  |
-| GET    | `/api/public/stats`     | Statistik todo                  |
-
-## Auth
-
-| Type    | Header            | Use Case                        |
-| ------- | ----------------- | ------------------------------- |
-| JWT     | `Authorization: Bearer <token>` | Dashboard/user routes |
-| API Key | `X-Api-Key: sk-xxxx`            | Public API (third-party) |
-| Google  | OAuth popup via Supabase        | Login/register |
-
-## Page Patterns
-
-### LIST PAGE (`Dashboard.tsx`)
-Reference implementation untuk halaman daftar. Pattern:
-- Search bar + stats cards + data table + pagination
-- Sheet untuk create/edit record
-- Sheet untuk view record → navigate ke detail page
-
-### DETAIL PAGE (`DashboardDetail.tsx`)
-Reference implementation untuk halaman detail. Pattern:
-- Back button + header with badge
-- Tabs: data tab (child table) + configuration tab
-- Sheet untuk view child detail
-- Dialog untuk action di dalam sheet (e.g., file upload)
-
-### Navigation Rules
-```
-2 levels:  LIST PAGE → Detail Page
-           (Table row click → navigate)
-
-3 levels:  LIST PAGE → Sheet → Detail Page
-           (Table row click → Sheet → child click → navigate)
+```bash
+pnpm dev          # web + server in watch mode
+pnpm build        # build all packages
+pnpm typecheck    # tsc across the workspace
 ```
 
-## Tech Stack
+## Replacing the placeholder resource
 
-| Layer    | Teknologi                  |
-| -------- | -------------------------- |
-| Frontend | Vite, React, React Router  |
-| UI       | shadcn/ui, Tailwind CSS v4 |
-| Backend  | Hono                       |
-| Auth     | Supabase Auth (Email + Google OAuth) |
-| API Docs | OpenAPI 3.0 + Swagger UI   |
-| Deploy   | Docker                     |
+1. Add your collection in a new `infra/pocketbase/pb_migrations/*.js` file (follow the todos pattern).
+2. Add Zod schemas in `packages/shared/src/schema/`.
+3. Add a route file in `apps/server/src/routes/` and mount it in `index.ts`.
+4. Copy `Dashboard.tsx` (list page) / `DashboardDetail.tsx` (detail page) as your UI starting points.

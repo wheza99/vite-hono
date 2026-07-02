@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@vite-hono/web", "dev"],
+      "port": 5173,
+      "autoPort": true
+    },
+    {
+      "name": "server",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@vite-hono/server", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "pocketbase",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "-f", "docker-compose.dev.yml", "up"],
+      "port": 8090
+    }
+  ]
+}
