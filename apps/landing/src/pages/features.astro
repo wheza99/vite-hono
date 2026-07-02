@@ -1,0 +1,118 @@
+---
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+import { THEME } from "@/styles/theme";
+import FeaturesBenefits from "@/components/sections/features-benefits";
+import FeaturesTabs from "@/components/sections/features-tabs";
+import CtaSection from "@/components/sections/cta-section";
+
+const STACK = [
+  {
+    name: "Vite",
+    description: "Lightning-fast dev server and optimized production builds.",
+  },
+  {
+    name: "Hono",
+    description: "A lightweight, web-standard API framework built for the edge.",
+  },
+  {
+    name: "PocketBase",
+    description: "Managed database, auth, and realtime in a single binary.",
+  },
+  {
+    name: "React",
+    description: "A component-driven UI you can extend to anything.",
+  },
+] as const;
+---
+
+<DefaultLayout
+  title={`Features — ${THEME.name}`}
+  description={`Explore everything ${THEME.name} has to offer — authentication, API keys, credits, billing, database, and docs.`}
+>
+  {/* ════════════════════ Section 1: Hero ════════════════════ */}
+  <section class="bg-dot-grid relative overflow-hidden border-b">
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(55%_100%_at_50%_0%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent)]"
+    >
+    </div>
+
+    <div
+      class="mx-auto flex max-w-4xl flex-col items-center px-6 pt-24 pb-16 text-center md:pt-32 md:pb-20"
+    >
+      <span class="section-label">Features</span>
+      <h1
+        class="text-accent mt-4 text-balance text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl"
+      >
+        Everything you need to build and ship.
+      </h1>
+      <p class="mt-6 max-w-2xl text-pretty text-lg text-muted-foreground">
+        A complete, production-tested toolkit — auth, billing, database, and
+        docs — wired up and ready to go.
+      </p>
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <a
+          href={THEME.appUrl}
+          class="bg-primary text-primary-foreground hover:bg-[var(--accent-hover)] inline-flex h-11 items-center justify-center rounded-lg px-6 text-sm font-medium transition-colors"
+        >
+          Get Started
+        </a>
+        <a
+          href="/pricing"
+          class="border-border bg-background text-foreground hover:bg-muted inline-flex h-11 items-center justify-center rounded-lg border px-6 text-sm font-medium transition-colors"
+        >
+          View Pricing
+        </a>
+      </div>
+    </div>
+  </section>
+
+  {/* ════════════════════ Section 2: Benefits ════════════════════ */}
+  <FeaturesBenefits client:load />
+
+  {/* ════════════════════ Section 3: Features Tabs ════════════════════ */}
+  <FeaturesTabs client:load />
+
+  {/* ════════════════════ Section 4: Architecture ════════════════════ */}
+  <section class="border-border border-b">
+    <div class="mx-auto max-w-7xl px-6 py-20 md:py-28">
+      <div class="mx-auto max-w-2xl text-center">
+        <span class="section-label">Architecture</span>
+        <h2
+          class="mt-3 text-balance text-3xl font-semibold tracking-tight md:text-4xl"
+        >
+          Built on a modern stack.
+        </h2>
+        <p class="text-muted-foreground mt-4 text-pretty text-lg">
+          Four well-loved technologies, working together out of the box.
+        </p>
+      </div>
+
+      <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {STACK.map((item) => (
+          <div
+            class="glow-card bg-card flex flex-col rounded-2xl p-6 ring-1 ring-foreground/10"
+          >
+            <span
+              class="bg-primary/10 text-primary grid size-11 place-items-center rounded-xl font-heading text-sm font-bold"
+            >
+              {item.name[0]}
+            </span>
+            <h3 class="mt-5 text-lg font-semibold tracking-tight">
+              {item.name}
+            </h3>
+            <p class="text-muted-foreground mt-2 text-sm leading-relaxed">
+              {item.description}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* ════════════════════ Section 5: CTA ════════════════════ */}
+  <CtaSection
+    client:load
+    title="Ready to build?"
+    subtitle="Start shipping today with a stack that just works."
+  />
+</DefaultLayout>

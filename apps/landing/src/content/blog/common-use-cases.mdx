@@ -1,0 +1,113 @@
+---
+title: "Common Use Cases and Examples"
+description: "From internal tools to customer-facing dashboards — see how teams put [Startup Name] to work across real scenarios."
+author: "Your Startup"
+date: 2026-02-20
+tags: ["examples", "use-cases", "inspiration"]
+featured: true
+---
+{/*
+  TEMPLATE: Replace this with your real SEO content.
+  This is a generic, well-structured placeholder article. Swap the copy,
+  headings, and examples for your actual product content before launch.
+*/}
+
+"What can I actually build with this?" is the question we hear most often. The honest answer is: almost anything that involves turning data into something people can use. This article walks through the most common use cases we see, with concrete examples of how teams approach each one.
+
+Use cases matter because they ground abstract features in real outcomes. A feature list tells you what a tool *does*; use cases tell you what it's *for*. Below are the patterns that show up again and again across our customers.
+
+## Internal tools and admin panels
+
+The most common starting point. Nearly every team has a pile of internal processes held together by spreadsheets and shared docs. Replacing them with a purpose-built tool saves hours every week.
+
+Typical internal tools include:
+
+- **Operations dashboards** — monitor queues, jobs, and system health.
+- **Customer support consoles** — look up users and take action fast.
+- **Content moderation tools** — review and approve user-submitted content.
+- **Reporting interfaces** — let non-technical stakeholders explore data safely.
+
+### Why teams build these first
+
+Internal tools have a forgiving audience (your own colleagues), clear requirements, and immediate payoff. They're the perfect low-risk first project. Ship something useful in an afternoon and earn buy-in for bigger builds.
+
+## Customer-facing dashboards
+
+When you're ready to expose data to your users, a customer-facing dashboard is the natural next step. These demand more polish than internal tools — branding, performance, and access control all matter — but the payoff is a stickier product.
+
+A well-designed dashboard answers one question per screen. Resist the temptation to show everything at once; instead, guide the eye from the most important metric outward.
+
+> **Tip:** Start with the single number your user cares about most. Everything else is supporting context.
+
+## Data pipelines and automation
+
+Not every use case has a human in the loop. Many teams use [Startup Name] to move and transform data on a schedule, freeing people from repetitive manual work.
+
+A simple scheduled pipeline might:
+
+1. Pull fresh data from a source every hour.
+2. Transform and validate each record.
+3. Write the result to a destination.
+4. Alert a channel if anything looks wrong.
+
+Here's a minimal example of a scheduled task definition:
+
+```js
+// Runs every hour, retries on failure, and alerts on repeated errors.
+export default {
+  name: "sync-hourly",
+  schedule: "0 * * * *",
+  retries: 3,
+  async run({ db, alert }) {
+    const rows = await db.source.pull();
+    const cleaned = rows.filter(isValid);
+    await db.destination.write(cleaned);
+    if (cleaned.length < rows.length * 0.9) {
+      await alert.send("Row validation rate below 90%");
+    }
+  },
+};
+```
+
+## Marketing and content sites
+
+Because [Startup Name] renders fast and scales automatically, it's a solid foundation for marketing pages, landing pages, and content sites. The same platform that powers your dashboards can power your public-facing presence, which means one less system to maintain.
+
+Common marketing use cases:
+
+- **Campaign landing pages** — spin up and tear down per campaign.
+- **Documentation portals** — versioned docs with search.
+- **Customer portals** — gated content for logged-in users.
+- **Status pages** — real-time system status for your users.
+
+## Multi-tenant SaaS features
+
+If you're building (or running) a SaaS product, [Startup Name] can host the account-facing features that every product needs but nobody enjoys building: onboarding flows, billing pages, team management, and audit logs.
+
+Building these once, well, means you never have to build them again. A reusable multi-tenant layer pays for itself the moment you launch your second product.
+
+### A note on access control
+
+Multi-tenant features live or die by access control. Model permissions explicitly and test them relentlessly. A good rule of thumb:
+
+| Question | Check |
+| --- | --- |
+| Can user A see tenant B's data? | Must be **no** |
+| Can a viewer perform admin actions? | Must be **no** |
+| Are permissions enforced on the server? | Must be **yes** |
+
+## Choosing the right use case to start
+
+If you're unsure where to begin, pick the use case that meets all three of these criteria:
+
+- It solves a real pain point someone complains about weekly.
+- It has a clear, measurable definition of "done."
+- It can be shipped in a week or less.
+
+Starting small and shipping fast builds momentum and confidence — both of which you'll need for the bigger projects later.
+
+## Bringing it together
+
+These use cases aren't mutually exclusive. Many of our most successful customers start with one internal tool, then layer on a dashboard, then add automation, and eventually run their entire operation on the platform. The platform grows with you because every use case shares the same foundations: data, access control, and a fast rendering layer.
+
+Whatever you choose to build first, the goal is the same: turn something slow and manual into something fast and automatic. Pick a use case, ship it, and iterate from there.

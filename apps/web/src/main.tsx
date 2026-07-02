@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { User, KeyRound, LogOut, Wallet } from 'lucide-react'
 import { AuthProvider, useAuth } from '@/lib/auth'
-import { HeroSection } from './pages/HeroSection'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Dashboard } from './pages/Dashboard'
@@ -114,7 +113,7 @@ function App() {
       <AuthProvider>
         <Navbar />
         <Routes>
-          <Route path="/" element={<HeroSection />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route

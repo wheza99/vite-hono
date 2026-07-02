@@ -1,0 +1,112 @@
+---
+title: "Getting Started with Your Startup"
+description: "Set up your workspace, invite your team, and ship your first project in under ten minutes with [Startup Name]."
+author: "Your Startup"
+date: 2026-01-15
+tags: ["guide", "onboarding", "beginners"]
+featured: true
+---
+{/*
+  TEMPLATE: Replace this with your real SEO content.
+  This is a generic, well-structured placeholder article. Swap the copy,
+  headings, and examples for your actual product content before launch.
+*/}
+
+Welcome to **[Startup Name]**. If you just signed up, you're in the right place. This guide walks you through everything you need to get from an empty account to a working project in under ten minutes. No prior experience required — we'll cover each step as we go.
+
+Getting started with a new tool can feel overwhelming, so we've optimized the first-run experience to remove as much friction as possible. By the end of this article you'll have created your first workspace, invited a teammate, configured a project, and published something real.
+
+## Why onboarding matters
+
+The first ten minutes a user spends in a product sets the tone for the entire relationship. A confusing first run leads to churn; a clear, guided one builds confidence. That philosophy shaped how [Startup Name] introduces itself to new teams.
+
+We focused on three principles when designing the onboarding flow:
+
+- **Speed** — reach a "wow" moment as quickly as possible.
+- **Clarity** — every screen explains what to do next.
+- **Momentum** — small wins compound into long-term engagement.
+
+### What you'll accomplish
+
+By the end of this guide, you will have:
+
+1. Created your first workspace.
+2. Invited a teammate and assigned a role.
+3. Connected a data source.
+4. Published a project to a shareable URL.
+
+## Step 1: Create your workspace
+
+After confirming your email, you'll land on the workspace setup screen. A workspace is the top-level container for everything your team builds — think of it as your organization's home base.
+
+Give your workspace a descriptive name. Most teams use their company name, but a project or department name works just as well. You can rename it later from **Settings → General**.
+
+> **Tip:** A single workspace is enough for most teams. Create additional workspaces only if you need hard isolation between groups (for example, separate clients or production vs. staging).
+
+## Step 2: Invite your team
+
+Software is a team sport. Invite collaborators from **Settings → Members** by entering their email address and choosing a role:
+
+- **Owner** — full control, including billing and deletion.
+- **Admin** — manage members and projects, but not billing.
+- **Editor** — create and edit content within projects.
+- **Viewer** — read-only access for stakeholders.
+
+Roles are enforced everywhere, including the API, so you never have to worry about someone accidentally touching something they shouldn't.
+
+## Step 3: Connect a data source
+
+Most projects need data. [Startup Name] supports several connection types out of the box, and the connection wizard autodetects the most common ones.
+
+Here's a minimal example of connecting a data source programmatically using our CLI:
+
+```bash
+# Install the CLI (one-time setup)
+npm install -g @your-startup/cli
+
+# Authenticate with your workspace
+your-startup login
+
+# Link a new data source
+your-startup connect --name "production-db" \
+  --type postgres \
+  --url $DATABASE_URL
+```
+
+Once connected, your data source appears in the dashboard and is immediately available to any project in the workspace.
+
+### Choosing the right connection type
+
+Not sure which connector to use? Here's a quick reference:
+
+| Need | Recommended source |
+| --- | --- |
+| Transactional records | PostgreSQL / MySQL |
+| Event streams | Webhook / queue |
+| File-based data | Object storage |
+| Third-party APIs | REST integration |
+
+## Step 4: Build and publish
+
+With a workspace, a team, and a data source in place, you're ready to build. Click **New Project**, pick a template, and start dragging components onto the canvas. Changes save automatically and preview in real time.
+
+When you're happy with the result, hit **Publish**. Your project goes live at a shareable URL instantly — no build step, no deploy pipeline, no waiting.
+
+## Common first-run questions
+
+New users often ask the same handful of questions. Here are the answers up front:
+
+- **Do I need a credit card to start?** No. The free trial requires no payment information.
+- **Can I change my plan later?** Yes, at any time. Upgrades are prorated automatically.
+- **Is my data secure?** All data is encrypted in transit and at rest. See our security docs for details.
+- **Can I export everything?** Always. We believe you should own your data, full stop.
+
+## Where to go next
+
+Congratulations — you've shipped your first project. From here, the natural next steps are:
+
+1. Explore the **Features** page to see what else is possible.
+2. Read **Best Practices for Your Workflow** to set up for scale.
+3. Join our community to ask questions and share what you've built.
+
+That's it for the getting-started guide. Welcome aboard, and happy building.

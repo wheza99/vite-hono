@@ -1,0 +1,81 @@
+---
+import { getCollection } from "astro:content";
+
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+import { THEME } from "@/styles/theme";
+import BlogFeatured from "@/components/sections/blog-featured";
+import BlogGrid from "@/components/sections/blog-grid";
+import CtaSection from "@/components/sections/cta-section";
+import { sortByDateDesc, toPostMeta } from "@/lib/blog";
+
+// Fetch all posts, newest-first.
+const allPosts = sortByDateDesc(await getCollection("blog"));
+
+// Featured hero = most recent `featured: true` post (falls back to the
+// newest post if none are flagged). Everything else fills the grid.
+const featuredEntry =
+  allPosts.find((post) => post.data.featured) ?? allPosts[0];
+const featuredMeta = featuredEntry ? toPostMeta(featuredEntry) : null;
+const restEntries = featuredEntry
+  ? allPosts.filter((post) => post.id !== featuredEntry.id)
+  : allPosts;
+const restMetas = restEntries.map(toPostMeta);
+---
+
+<DefaultLayout
+  title={`Blog — ${THEME.name}`}
+  description={`Guides, tips, and updates from the ${THEME.name} team.`}
+>
+  {/* ════════════════════ Section 1: Hero ════════════════════ */}
+  <section class="bg-dot-grid relative overflow-hidden border-b">
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(55%_100%_at_50%_0%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent)]"
+    >
+    </div>
+
+    <div
+      class="mx-auto flex max-w-4xl flex-col items-center px-6 pt-24 pb-16 text-center md:pt-32 md:pb-20"
+    >
+      <span class="section-label">Blog</span>
+      <h1
+        class="text-accent mt-4 text-balance text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl"
+      >
+        From the blog.
+      </h1>
+      <p class="mt-6 max-w-2xl text-pretty text-lg text-muted-foreground">
+        Guides, tips, and updates from the team.
+      </p>
+    </div>
+  </section>
+
+  {/* ════════════════════ Section 2: Featured post ════════════════════ */}
+  {featuredMeta && (
+    <section class="border-b">
+      <div class="mx-auto max-w-7xl px-6 py-16 md:py-20">
+        <BlogFeatured post={featuredMeta} client:load />
+      </div>
+    </section>
+  )}
+
+  {/* ════════════════════ Section 3: All posts grid ════════════════════ */}
+  <section class="border-b">
+    <div class="mx-auto max-w-7xl px-6 py-16 md:py-24">
+      <h2 class="text-balance text-2xl font-semibold tracking-tight md:text-3xl">
+        All posts
+      </h2>
+      <p class="text-muted-foreground mt-3 text-pretty">
+        Browse every article, newest first.
+      </p>
+
+      <div class="mt-10">
+        <BlogGrid posts={restMetas} client:load />
+      </div>
+    </div>
+  </section>
+
+  {/* ════════════════════ Section 4: CTA ════════════════════ */}
+  <CtaSection
+    title="Ready to get started?"
+    subtitle="Join today and start building in minutes."
+  />
+</DefaultLayout>

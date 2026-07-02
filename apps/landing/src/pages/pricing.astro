@@ -1,0 +1,52 @@
+---
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+import { THEME } from "@/styles/theme";
+import PricingToggle from "@/components/sections/pricing-toggle";
+import FeaturesIncluded from "@/components/sections/features-included";
+import PricingFaq from "@/components/sections/pricing-faq";
+import CtaSection from "@/components/sections/cta-section";
+---
+
+<DefaultLayout
+  title={`Pricing — ${THEME.name}`}
+  description={`Simple, transparent pricing for ${THEME.name}. Start free, upgrade when you're ready.`}
+>
+  {/* ════════════════════ Section 1: Hero + Toggle + Cards ════════════════════ */}
+  <section class="bg-dot-grid relative overflow-hidden border-b">
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(55%_100%_at_50%_0%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent)]"
+    >
+    </div>
+
+    <div
+      class="mx-auto flex max-w-4xl flex-col items-center px-6 pt-24 pb-20 text-center md:pt-32 md:pb-28"
+    >
+      <span class="section-label">Pricing</span>
+      <h1
+        class="text-accent mt-4 text-balance text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl"
+      >
+        Pricing that scales with you.
+      </h1>
+      <p class="mt-6 max-w-2xl text-pretty text-lg text-muted-foreground">
+        Start free, upgrade when you&rsquo;re ready. No hidden fees.
+      </p>
+
+      <div class="mt-12 w-full">
+        <PricingToggle client:load />
+      </div>
+    </div>
+  </section>
+
+  {/* ════════════════════ Section 2: Features Included ════════════════════ */}
+  <FeaturesIncluded />
+
+  {/* ════════════════════ Section 3: Pricing FAQ ════════════════════ */}
+  <PricingFaq client:visible />
+
+  {/* ════════════════════ Section 4: CTA ════════════════════ */}
+  <CtaSection
+    title="Start free, upgrade when you need."
+    subtitle="No credit card required to get started."
+    note=""
+  />
+</DefaultLayout>

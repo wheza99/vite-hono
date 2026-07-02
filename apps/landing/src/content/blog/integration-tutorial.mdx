@@ -1,0 +1,142 @@
+---
+title: "How to Integrate with Third-Party Services"
+description: "A step-by-step tutorial on connecting [Startup Name] to external APIs, webhooks, and data warehouses."
+author: "Your Startup"
+date: 2026-03-05
+tags: ["tutorial", "integration", "api"]
+featured: false
+---
+{/*
+  TEMPLATE: Replace this with your real SEO content.
+  This is a generic, well-structured placeholder article. Swap the copy,
+  headings, and examples for your actual product content before launch.
+*/}
+
+No product is an island. Sooner or later you'll need to connect [Startup Name] to something else — a payment provider, a CRM, a data warehouse, or an internal API. This tutorial walks through the three most common integration patterns and shows you exactly how to wire them up.
+
+Integrations are where most of the real complexity in a system lives. A clean, well-documented integration strategy keeps that complexity manageable and your architecture legible.
+
+## The three integration patterns
+
+Most integrations fall into one of three buckets. Knowing which one you're building shapes every other decision.
+
+- **Outbound (polling)** — you call an external API on a schedule.
+- **Inbound (webhooks)** — an external service pushes events to you.
+- **Bidirectional (sync)** — data flows both ways and stays consistent.
+
+## Pattern 1: Outbound API calls
+
+Outbound calls are the simplest place to start. You request data from a third party on your own schedule, transform it, and store the result.
+
+Here's a minimal, production-minded example that fetches data from an external API with proper error handling:
+
+```js
+async function fetchExternalRecords(since) {
+  const res = await fetch(`https://api.example.com/records?since=${since}`, {
+    headers: { Authorization: `Bearer ${process.env.EXAMPLE_API_KEY}` },
+    // Always set a timeout so a slow upstream can't stall your job.
+    signal: AbortSignal.timeout(10_000),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Upstream returned ${res.status}: ${await res.text()}`);
+  }
+
+  return res.json();
+}
+```
+
+### Best practices for outbound calls
+
+- **Always set a timeout.** A hung request can stall an entire pipeline.
+- **Retry with backoff.** Transient failures are normal; handle them gracefully.
+- **Cache aggressively.** If the data rarely changes, don't fetch it on every call.
+- **Log request IDs.** They make support conversations dramatically shorter.
+
+## Pattern 2: Inbound webhooks
+
+Webhooks flip the model: instead of you asking for updates, the external service tells you when something happens. This is more efficient but requires you to be ready to receive traffic at any moment.
+
+To accept a webhook, expose an endpoint, verify the incoming signature, and process the event idempotently.
+
+```js
+import { createHmac } from "node:crypto";
+
+async function handleWebhook(req, res) {
+  const signature = req.headers["x-example-signature"] ?? "";
+  const expected = createHmac("sha256", process.env.WEBHOOK_SECRET)
+    .update(req.rawBody)
+    .digest("hex");
+
+  // Constant-time comparison to prevent timing attacks.
+  if (!signature || !timingSafeEqual(signature, expected)) {
+    return res.status(401).send("Invalid signature");
+  }
+
+  const event = req.body;
+  await processEvent(event); // must be idempotent
+  res.status(200).send("ok");
+}
+```
+
+> **Tip:** Always process webhook events idempotently. You will receive duplicates — it's not a question of if, but when.
+
+## Pattern 3: Bidirectional sync
+
+A true sync keeps two systems consistent over time. This is the hardest pattern because you have to handle conflicts, ordering, and failure recovery on both sides.
+
+The key insight: don't try to build a perfect real-time sync. Instead, build an *eventually consistent* sync with a clear source of truth, and reconcile on a schedule.
+
+A robust sync needs:
+
+1. **A source of truth** — one system wins conflicts.
+2. **A change log** — so you know what to sync.
+3. **A reconciliation job** — to catch anything that slipped through.
+4. **A manual override** — for when (not if) something goes wrong.
+
+## Handling authentication
+
+Almost every integration requires authentication. The three most common schemes:
+
+- **API keys** — simplest; pass a secret in a header.
+- **OAuth 2.0** — best for user-facing integrations; handles consent and refresh.
+- **MTLS / signed requests** — strongest; used for high-security B2B connections.
+
+Pick the simplest scheme that satisfies your security requirements. Over-engineering auth is a common (and expensive) mistake.
+
+### Storing credentials safely
+
+Never hardcode credentials. Load them from your environment or a secrets manager, and rotate them on a schedule:
+
+```bash
+# .env (gitignored, never committed)
+EXAMPLE_API_KEY=sk_live_xxxxxxxxxxxxxxxx
+WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxx
+```
+
+## Testing integrations
+
+Integrations are notoriously hard to test because they depend on systems you don't control. A few strategies that help:
+
+- **Mock the external API** in unit tests using recorded responses.
+- **Run contract tests** against a sandbox if the provider offers one.
+- **Replay recorded webhooks** to verify your handler stays correct over time.
+- **Monitor in production** with alerts on error rate and latency.
+
+## Monitoring and reliability
+
+An integration that works today can break tomorrow when the third party changes their API. Treat integrations as things that *will* fail, and build observability in from the start.
+
+Watch these signals:
+
+- **Error rate** spikes indicate a breaking change or outage.
+- **Latency** creep suggests a degrading upstream.
+- **Payload size** changes hint at an undocumented schema change.
+
+## When to build vs. buy
+
+Before writing a custom integration, check whether a maintained connector already exists. A supported connector saves you maintenance burden and gives you someone to call when things break. Build custom only when no connector meets your needs or your volume makes a connector uneconomical.
+
+## Wrapping up
+
+Integrations don't have to be scary. Pick the right pattern for the job, authenticate safely, test rigorously, and monitor relentlessly. Do those four things and your integrations will be the boring, reliable part of your system — which is exactly what you want them to be.

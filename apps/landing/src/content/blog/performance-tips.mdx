@@ -1,0 +1,151 @@
+---
+title: "Performance Tips and Optimization"
+description: "Practical techniques to keep your [Startup Name] projects fast, from queries and rendering to caching and asset delivery."
+author: "Your Startup"
+date: 2026-03-22
+tags: ["performance", "optimization", "scaling"]
+featured: false
+---
+{/*
+  TEMPLATE: Replace this with your real SEO content.
+  This is a generic, well-structured placeholder article. Swap the copy,
+  headings, and examples for your actual product content before launch.
+*/}
+
+Performance is a feature. A fast product feels trustworthy, keeps users engaged, and costs less to run. A slow one erodes confidence with every extra second of load time. This article collects the optimization techniques that consistently deliver the biggest wins.
+
+Before optimizing anything, measure. Intuition about performance is famously unreliable, and optimizing the wrong thing wastes effort and often makes things worse. Establish a baseline, find the actual bottleneck, and only then apply targeted fixes.
+
+## Measure first, always
+
+You can't improve what you can't see. Set up baseline metrics before changing a single line of code. The goal is to know two things: where time is being spent today, and whether your changes actually help.
+
+Key metrics to track:
+
+- **Time to first byte (TTFB)** — server responsiveness.
+- **Largest contentful paint (LCP)** — perceived load speed.
+- **Interaction latency** — how snappy the UI feels.
+- **Query duration** — how long data operations take.
+
+### A simple timing helper
+
+Instrument the slow paths so you always know where time goes:
+
+```js
+async function timed(label, fn) {
+  const start = performance.now();
+  try {
+    return await fn();
+  } finally {
+    const ms = (performance.now() - start).toFixed(1);
+    console.log(`[perf] ${label}: ${ms}ms`);
+  }
+}
+
+// Usage
+const rows = await timed("fetch-orders", () => db.orders.list());
+```
+
+## Optimize your queries
+
+For most data-driven products, the database is the bottleneck. A single missing index or an N+1 query pattern can dominate your response time. Audit your queries before anything else.
+
+Common query wins:
+
+- **Add indexes** on columns you filter or join on.
+- **Select only what you need** — avoid `SELECT *`.
+- **Paginate** large result sets instead of loading everything.
+- **Batch** related lookups to avoid N+1 patterns.
+
+> **Tip:** The query that's fast with 1,000 rows is often catastrophic with 1,000,000. Always test at realistic scale.
+
+## Render efficiently
+
+Once data is in hand, rendering is the next frontier. The goal is to do as little work as possible on the critical path and defer everything else.
+
+Effective rendering strategies:
+
+- **Virtualize long lists** so you only render what's visible.
+- **Memoize expensive computations** with a sensible cache key.
+- **Split heavy components** so the initial paint isn't blocked.
+- **Prefer server rendering** for content that doesn't need to be interactive.
+
+## Cache aggressively (and invalidate correctly)
+
+A well-placed cache is the highest-leverage optimization there is. The trick isn't adding a cache — it's keeping it correct when the underlying data changes.
+
+A simple caching hierarchy:
+
+1. **Browser cache** — static assets with long max-age.
+2. **CDN cache** — public, cacheable responses at the edge.
+3. **Application cache** — computed results keyed by inputs.
+4. **Query cache** — database results with a short TTL.
+
+```js
+// Cache a computed result with a versioned key.
+const cache = new Map();
+function memoized(key, compute) {
+  if (cache.has(key)) return cache.get(key);
+  const value = compute();
+  cache.set(key, value);
+  return value;
+}
+```
+
+### The cache invalidation problem
+
+Every cache adds a new question: "when is this stale?" Answer it explicitly for each cache, or you'll ship subtle bugs. Prefer TTLs for data that changes on its own, and explicit invalidation for data you control.
+
+## Shrink your assets
+
+Bytes on the wire translate directly to load time, especially on mobile connections. Audit your asset budget regularly.
+
+Quick wins:
+
+- Compress and resize images to the size they're actually displayed at.
+- Subset web fonts to the characters you use.
+- Enable Brotli or gzip compression for text assets.
+- Remove unused dependencies that bloat your bundle.
+
+## Concurrency and parallelism
+
+Sequential operations are a common, invisible performance tax. Anywhere you have independent operations, run them in parallel.
+
+```js
+// Slow: fetches happen one after another.
+const user = await fetchUser(id);
+const orders = await fetchOrders(id);
+const profile = await fetchProfile(id);
+
+// Fast: all three run at the same time.
+const [user, orders, profile] = await Promise.all([
+  fetchUser(id),
+  fetchOrders(id),
+  fetchProfile(id),
+]);
+```
+
+The difference between sequential and parallel fetches is often the difference between a fast page and a slow one — for the exact same amount of work.
+
+## Set the right limits
+
+Unbounded operations are a reliability hazard as much as a performance one. Always set explicit limits on how much work a single request can do.
+
+- Cap result-set sizes with sensible defaults.
+- Set timeouts on every external call.
+- Rate-limit expensive endpoints.
+- Queue background work instead of doing it inline.
+
+## Monitor in production
+
+Lab measurements lie; real user data tells the truth. Collect real-user metrics (RUM) so you know how your product actually performs in the wild, across devices and networks you can't test yourself.
+
+Watch for:
+
+- **Regression** after deploys.
+- **Long-tail latency** (p95 and p99, not just averages).
+- **Geographic variation** in performance.
+
+## The optimization mindset
+
+The best performance work is the work you don't have to do. Before optimizing, ask whether the slow thing needs to happen at all. The fastest code is the code that never runs. After that, measure, target the real bottleneck, and ship small, verifiable improvements. Do that consistently and your product will keep getting faster over time instead of slower.

@@ -9,12 +9,14 @@ services:
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - web_dist:/srv/web:ro
+      - landing_dist:/srv/landing:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
       - server
       - pocketbase
       - web
+      - landing
     restart: unless-stopped
 
   pocketbase:
@@ -50,7 +52,17 @@ services:
       - web_dist:/out
     restart: "no"
 
+  # Builds the static Astro landing bundle and copies it into the shared volume
+  landing:
+    build:
+      context: .
+      dockerfile: apps/landing/Dockerfile
+    volumes:
+      - landing_dist:/out
+    restart: "no"
+
 volumes:
   web_dist:
+  landing_dist:
   caddy_data:
   caddy_config:
