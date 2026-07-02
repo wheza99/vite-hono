@@ -1,0 +1,39 @@
+---
+import { getEntry, render } from "astro:content";
+
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+import LegalArticle from "@/components/sections/legal-article";
+import { THEME } from "@/styles/theme";
+import { formatDate } from "@/lib/blog";
+
+// Render the `legal/terms` collection entry. The MDX body is rendered
+// server-side below the React header island.
+const doc = await getEntry("legal", "terms");
+if (!doc) throw new Error("Missing legal/terms collection entry");
+const { Content } = await render(doc);
+const lastUpdated = formatDate(doc.data.lastUpdated);
+---
+
+{/* TEMPLATE: Have a lawyer review and customize these before launch */}
+<DefaultLayout
+  title={`Terms of Service — ${THEME.name}`}
+  description={`The terms that govern your use of ${THEME.name}.`}
+>
+  <article>
+    {/* ════════════════════ Article header (React island) ════════════════════ */}
+    <LegalArticle
+      title={doc.data.title}
+      lastUpdated={lastUpdated}
+      client:load
+ />
+
+    {/* ════════════════════ Article body (server-rendered MDX) ════════════════════ */}
+    <div class="mx-auto max-w-3xl px-6 py-12 md:py-16">
+      <div
+        class="prose prose-lg max-w-none dark:prose-invert prose-headings:scroll-mt-24 prose-headings:font-display prose-a:font-medium"
+      >
+        <Content />
+      </div>
+    </div>
+  </article>
+</DefaultLayout>

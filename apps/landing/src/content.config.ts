@@ -23,4 +23,23 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { blog };
+/**
+ * Legal content collection.
+ *
+ * Generic, structured legal pages (Privacy Policy, Terms of Service, Cookie
+ * Policy) live as `.mdx` files under `src/content/legal/`. Each carries a
+ * `lastUpdated` date shown on the page. The body is plain prose rendered
+ * server-side with `prose dark:prose-invert` typography.
+ *
+ * IMPORTANT: these are placeholder templates. Have a lawyer review and
+ * customize every file here before launch.
+ */
+const legal = defineCollection({
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/legal" }),
+  schema: z.object({
+    title: z.string(),
+    lastUpdated: z.coerce.date(),
+  }),
+});
+
+export const collections = { blog, legal };

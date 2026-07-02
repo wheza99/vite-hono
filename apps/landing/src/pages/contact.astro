@@ -1,0 +1,90 @@
+---
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+import ContactForm from "@/components/sections/contact-form";
+import { THEME } from "@/styles/theme";
+---
+
+{/* TEMPLATE: All copy and the contact form below are placeholder.
+    Replace the response-time note and wire the form to your backend. */}
+<DefaultLayout
+  title={`Contact — ${THEME.name}`}
+  description={`Get in touch with the ${THEME.name} team. Questions, feedback, or just want to say hello?`}
+>
+  {/* ════════════════════ Section 1: Hero ════════════════════ */}
+  <section class="bg-dot-grid relative overflow-hidden border-b">
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(55%_100%_at_50%_0%,color-mix(in_oklch,var(--primary)_16%,transparent),transparent)]"
+    >
+    </div>
+
+    <div
+      class="mx-auto flex max-w-4xl flex-col items-center px-6 pt-24 pb-16 text-center md:pt-32 md:pb-20"
+    >
+      <span class="section-label">Contact</span>
+      <h1
+        class="text-accent mt-4 text-balance text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl"
+      >
+        Get in touch.
+      </h1>
+      <p class="mt-6 max-w-2xl text-pretty text-lg text-muted-foreground">
+        Questions, feedback, or just want to say hello? We&rsquo;d love to hear
+        from you.
+      </p>
+    </div>
+  </section>
+
+  {/* ════════════════════ Section 2: Form + contact info ════════════════════ */}
+  <section class="border-b">
+    <div class="mx-auto max-w-6xl px-6 py-16 md:py-24">
+      <div class="grid gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-16">
+        {/* Form */}
+        <div
+          class="bg-card glow-card rounded-2xl p-6 ring-1 ring-foreground/10 md:p-8"
+        >
+          <h2 class="text-balance text-xl font-semibold tracking-tight">
+            Send us a message
+          </h2>
+          <p class="text-muted-foreground mt-2 text-sm">
+            Fill out the form and we&rsquo;ll get back to you as soon as we can.
+          </p>
+          <div class="mt-6">
+            <ContactForm client:load />
+          </div>
+        </div>
+
+        {/* Contact info */}
+        <aside class="space-y-8">
+          <div>
+            <h3 class="text-sm font-semibold">Support email</h3>
+            <a
+              href={`mailto:${THEME.supportEmail}`}
+              class="text-primary hover:underline mt-2 block text-pretty"
+            >
+              {THEME.supportEmail}
+            </a>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-semibold">Response time</h3>
+            <p class="text-muted-foreground mt-2 text-sm leading-relaxed">
+              We typically reply within 1&ndash;2 business days. For urgent
+              account or billing issues, include &ldquo;Urgent&rdquo; in your
+              subject line.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="text-sm font-semibold">Other ways to reach us</h3>
+            <p class="text-muted-foreground mt-2 text-sm leading-relaxed">
+              Check our
+              <a href="/blog" class="text-primary hover:underline">blog</a>
+              for guides and updates, or head back to the
+              <a href="/" class="text-primary hover:underline">homepage</a>
+              to explore the product.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</DefaultLayout>
