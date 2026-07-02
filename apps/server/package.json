@@ -1,0 +1,25 @@
+{
+  "name": "@vite-hono/server",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc --noEmit",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.14",
+    "tsx": "^4.21.0",
+    "@vite-hono/shared": "workspace:*",
+    "@whop/sdk": "^0.0.40",
+    "dotenv": "^17.4.2",
+    "hono": "^4.7.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,38 +1,56 @@
 services:
-  app:
-    build: .
-    container_name: 006-zclaw-app
+  caddy:
+    image: caddy:2-alpine
     ports:
-      - "3006:3000"
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - web_dist:/srv/web:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - server
+      - pocketbase
+      - web
+    restart: unless-stopped
+
+  pocketbase:
+    build: ./infra/pocketbase
+    volumes:
+      - ./pb_data:/pb/pb_data
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
     environment:
       - PORT=3000
-      - POCKETBASE_URL=http://006-zclaw-pb:8090
-      - POCKETBASE_ADMIN_EMAIL=admin@test.com
-      - POCKETBASE_ADMIN_PASSWORD=Admin123456!
-      - TRIPAY_API_URL=${TRIPAY_API_URL}
-      - TRIPAY_API_KEY=${TRIPAY_API_KEY}
-      - TRIPAY_PRIVATE_KEY=${TRIPAY_PRIVATE_KEY}
-      - TRIPAY_MERCHANT_CODE=${TRIPAY_MERCHANT_CODE}
+      - POCKETBASE_URL=http://pocketbase:8090
+      - POCKETBASE_ADMIN_EMAIL=${POCKETBASE_ADMIN_EMAIL}
+      - POCKETBASE_ADMIN_PASSWORD=${POCKETBASE_ADMIN_PASSWORD}
+      - WHOP_API_KEY=${WHOP_API_KEY:-}
+      - WHOP_COMPANY_ID=${WHOP_COMPANY_ID:-}
+      - WHOP_ACCESS_PASS_ID=${WHOP_ACCESS_PASS_ID:-}
+      - WHOP_WEBHOOK_SECRET=${WHOP_WEBHOOK_SECRET:-}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://${DOMAIN:-localhost}}
+    depends_on:
+      - pocketbase
     restart: unless-stopped
-    networks:
-      - default
-      - npm-network
 
-  pb:
-    image: ghcr.io/muchobien/pocketbase:latest
-    container_name: 006-zclaw-pb
-    restart: unless-stopped
-    ports:
-      - "9006:8090"
+  # Builds the static web bundle and copies it into the shared volume
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
     volumes:
-      - ./database/pb_data:/pb_data
-    networks:
-      - default
-      - npm-network
+      - web_dist:/out
+    restart: "no"
 
-networks:
-  default:
-    name: zclaw_default
-  npm-network:
-    name: nginx-proxy-manager_default
-    external: true
+volumes:
+  web_dist:
+  caddy_data:
+  caddy_config:

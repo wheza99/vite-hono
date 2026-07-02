@@ -1,7 +1,6 @@
 node_modules
 dist
-.server-port
 .env
 .env.local
 .DS_Store
-database/
+pb_data/
