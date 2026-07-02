@@ -1,4 +1,6 @@
 ---
+import { getCollection } from "astro:content";
+
 import DefaultLayout from "@/layouts/DefaultLayout.astro";
 import { THEME } from "@/styles/theme";
 import HowItWorks from "@/components/sections/HowItWorks";
@@ -8,6 +10,12 @@ import Pricing from "@/components/sections/Pricing";
 import Faq from "@/components/sections/Faq";
 import BlogPreview from "@/components/sections/BlogPreview";
 import Cta from "@/components/sections/Cta";
+import { sortByDateDesc, toPostMeta } from "@/lib/blog";
+
+// Latest 3 blog posts for the homepage preview.
+const latestPosts = sortByDateDesc(await getCollection("blog"))
+  .slice(0, 3)
+  .map(toPostMeta);
 ---
 
 <DefaultLayout
@@ -99,7 +107,7 @@ import Cta from "@/components/sections/Cta";
   <Faq client:visible />
 
   {/* ════════════════════ Section 7: Blog ════════════════════ */}
-  <BlogPreview />
+  <BlogPreview posts={latestPosts} />
 
   {/* ════════════════════ Section 8: CTA ════════════════════ */}
   <Cta />

@@ -3,6 +3,9 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+/* Blog article typography (prose / prose-invert utilities). */
+@plugin "@tailwindcss/typography";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -192,4 +195,25 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted-foreground);
+}
+
+/* ── Blog prose (@tailwindcss/typography) ───────────────────────────────
+   Force the typography plugin's prose blocks to use the same theme fonts
+   as the rest of the site (Geist) instead of its default serif stack. */
+.prose {
+  font-family: var(--font-sans);
+}
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-family: var(--font-display);
+}
+/* Tint links + inline code with the accent color. */
+.prose :where(a):not(:hover) {
+  color: var(--primary);
+}
+.prose :where(code):not(pre code) {
+  color: var(--primary);
+  font-weight: 500;
 }

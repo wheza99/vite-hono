@@ -1,0 +1,143 @@
+---
+title: "Migrating from a Legacy System"
+description: "A practical, low-risk playbook for moving off a legacy system onto [Startup Name] without downtime or data loss."
+author: "Your Startup"
+date: 2026-04-10
+tags: ["migration", "guide", "operations"]
+featured: false
+---
+{/*
+  TEMPLATE: Replace this with your real SEO content.
+  This is a generic, well-structured placeholder article. Swap the copy,
+  headings, and examples for your actual product content before launch.
+*/}
+
+Migrating off a legacy system is one of the highest-stakes projects a team can take on. Done well, it unlocks speed and unlocks features that were previously impossible. Done poorly, it causes downtime, data loss, and lost trust. This playbook covers the approach we recommend for migrating onto [Startup Name] safely.
+
+The good news: migrations don't have to be a big-bang, all-or-nothing gamble. The safest migrations are incremental, reversible, and boring. The strategies below keep risk low at every step.
+
+## Before you start: define success
+
+A migration without a clear definition of "done" drifts forever. Before touching any data, write down exactly what success looks like and how you'll know you've achieved it.
+
+A good success definition includes:
+
+- **Scope** — exactly which features and data are in scope.
+- **Cutover criteria** — measurable signals that say it's safe to switch over.
+- **Rollback plan** — how you'll undo a bad migration if something goes wrong.
+- **Timeline** — a realistic estimate, with buffer for surprises.
+
+> **Tip:** If you can't describe how you'd roll back, you're not ready to migrate. Design the rollback path first.
+
+## Understand the legacy system
+
+You can't safely leave a system you don't understand. Before planning the migration, invest time in mapping the legacy system's behavior — especially the parts nobody remembers anymore.
+
+Document at minimum:
+
+- **Data model** — every table, field, and relationship.
+- **Business rules** — the logic encoded in code, triggers, and reports.
+- **Integrations** — every system that reads from or writes to it.
+- **Edge cases** — the special cases that only surface in production.
+
+### Find the hidden behavior
+
+Legacy systems accumulate behavior that isn't written down anywhere. Look for:
+
+1. Scheduled jobs and cron tasks.
+2. Manual processes that "everyone just knows."
+3. Data that's consumed by reports nobody owns.
+4. Fix scripts people run when something breaks.
+
+## Choose a migration strategy
+
+There are two reliable strategies for migrating. Pick the one that matches your risk tolerance and team size.
+
+### Strategy A: Strangler fig (incremental)
+
+Move the system piece by piece, running old and new in parallel. Each migrated piece lets you delete part of the legacy system. Risk stays low because you can stop or roll back at any point.
+
+- **Best for** — large, risky, or poorly understood systems.
+- **Tradeoff** — takes longer overall.
+
+### Strategy B: Parallel run (shadow)
+
+Build the new system in full, then run it alongside the old one, comparing outputs until you're confident they match. Cut over once the comparison is clean.
+
+- **Best for** — well-understood systems with clear outputs.
+- **Tradeoff** — requires running two systems at once.
+
+## Move the data carefully
+
+Data migration is where most migrations go wrong. Treat it as a first-class engineering problem, not an afterthought.
+
+A safe data migration pipeline:
+
+1. **Extract** from the legacy system without disrupting it.
+2. **Transform** into the new schema, validating every record.
+3. **Load** into the new system in batches.
+4. **Reconcile** counts and checksums against the source.
+
+Here's a sketch of a batched, resumable load:
+
+```js
+async function migrateInBatches({ source, destination, batchSize = 500 }) {
+  let cursor = loadCheckpoint(); // resume from where we left off
+  let migrated = 0;
+
+  while (true) {
+    const batch = await source.fetchBatch(cursor, batchSize);
+    if (batch.length === 0) break;
+
+    const cleaned = batch.map(transform).filter(isValid);
+    await destination.insert(cleaned);
+
+    cursor = batch[batch.length - 1].id;
+    saveCheckpoint(cursor);
+    migrated += cleaned.length;
+    console.log(`migrated ${migrated} records`);
+  }
+}
+```
+
+### Validation is non-negotiable
+
+After loading, validate relentlessly. Count rows, hash contents, spot-check edge cases. A migration that "looks done" but dropped 0.5% of records will haunt you for years.
+
+## Cut over with a safety net
+
+The actual switch from old to new is the moment of maximum risk. Minimize it with a carefully staged cutover.
+
+A safe cutover sequence:
+
+1. **Freeze writes** to the legacy system (or put it in read-only mode).
+2. **Run the final delta migration** to catch any changed data.
+3. **Point traffic** at the new system.
+4. **Watch closely** for errors and latency anomalies.
+5. **Keep the old system warm** for a fast rollback if needed.
+
+> **Tip:** Schedule cutover for a low-traffic window, and have the whole team on standby. Migrations are not a "set it and forget it" operation.
+
+## Common pitfalls
+
+Migrations fail in predictable ways. Recognize these traps early:
+
+- **Underestimating data quality issues** — dirty source data surfaces every hidden bug.
+- **Forgetting scheduled jobs** — the cron task nobody documented stops running.
+- **Ignoring the long tail** — the last 5% of cases takes 50% of the effort.
+- **Cutting over on a deadline** — rushing cutover is how outages happen.
+
+## After the migration
+
+A migration isn't over at cutover. Plan for a stabilization period where you watch the new system closely, fix issues fast, and eventually decommission the old one for good.
+
+Post-migration checklist:
+
+- Monitor error rates and performance for at least two weeks.
+- Confirm every integration is reading from the new system.
+- Back up the legacy data one final time before archiving.
+- Document what you learned for the next migration.
+
+## Final thoughts
+
+Migrations are rarely as scary as they seem when approached with discipline. Define success up front, understand the legacy system deeply, move data in safe batches, and cut over with a rollback plan in your back pocket. Do that, and your migration will be the rare kind: the one nobody notices because nothing went wrong.
