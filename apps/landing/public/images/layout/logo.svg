@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" width="220" height="48" role="img" aria-label="Your Startup logo">
+  <rect x="0" y="6" width="36" height="36" rx="9" fill="context-fill" />
+  <rect x="0" y="6" width="36" height="36" rx="9" fill="#4f46e5" />
+  <path d="M12 33V15h4v14h9v4H12z" fill="#ffffff" />
+  <text x="48" y="31" font-family="'Geist Variable', system-ui, sans-serif" font-size="22" font-weight="600" fill="currentColor">
+    Your Startup
+  </text>
+</svg>

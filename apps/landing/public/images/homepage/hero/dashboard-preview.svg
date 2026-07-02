@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750" role="img" aria-label="Abstract product dashboard preview">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#f6f7fb" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1" />
+      <stop offset="1" stop-color="#4f46e5" />
+    </linearGradient>
+    <linearGradient id="bar" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#4f46e5" stop-opacity="0.25" />
+      <stop offset="1" stop-color="#4f46e5" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="24" stdDeviation="40" flood-color="#0a0a0a" flood-opacity="0.10" />
+    </filter>
+  </defs>
+
+  <!-- App window -->
+  <rect x="0" y="0" width="1200" height="750" rx="20" fill="url(#bg)" />
+
+  <!-- Title bar -->
+  <rect x="0" y="0" width="1200" height="64" rx="20" fill="#ffffff" />
+  <rect x="0" y="44" width="1200" height="20" fill="#ffffff" />
+  <circle cx="36" cy="32" r="6" fill="#ff5f57" />
+  <circle cx="58" cy="32" r="6" fill="#febc2e" />
+  <circle cx="80" cy="32" r="6" fill="#28c840" />
+  <rect x="520" y="20" width="160" height="24" rx="12" fill="#f1f1f4" />
+
+  <!-- Sidebar -->
+  <rect x="0" y="64" width="240" height="686" fill="#ffffff" />
+  <rect x="0" y="64" width="240" height="686" fill="#0a0a0a" opacity="0.02" />
+  <rect x="24" y="96" width="120" height="16" rx="8" fill="#4f46e5" />
+  <g fill="#c7c9d1">
+    <rect x="24" y="152" width="160" height="14" rx="7" />
+    <rect x="24" y="188" width="140" height="14" rx="7" />
+    <rect x="24" y="224" width="150" height="14" rx="7" />
+    <rect x="24" y="260" width="120" height="14" rx="7" />
+    <rect x="24" y="296" width="150" height="14" rx="7" />
+  </g>
+  <rect x="16" y="142" width="208" height="44" rx="10" fill="#4f46e5" opacity="0.08" />
+
+  <!-- Main content -->
+  <rect x="272" y="96" width="560" height="22" rx="11" fill="#0a0a0a" opacity="0.10" />
+  <rect x="272" y="128" width="360" height="16" rx="8" fill="#c7c9d1" />
+
+  <!-- KPI cards -->
+  <g filter="url(#shadow)">
+    <rect x="272" y="168" width="208" height="120" rx="14" fill="#ffffff" />
+    <rect x="272" y="384" width="208" height="120" rx="14" fill="#ffffff" />
+    <rect x="496" y="168" width="208" height="120" rx="14" fill="#ffffff" />
+    <rect x="496" y="384" width="208" height="120" rx="14" fill="#ffffff" />
+  </g>
+  <g fill="#c7c9d1">
+    <rect x="296" y="192" width="80" height="12" rx="6" />
+    <rect x="520" y="192" width="80" height="12" rx="6" />
+    <rect x="296" y="408" width="80" height="12" rx="6" />
+    <rect x="520" y="408" width="80" height="12" rx="6" />
+  </g>
+  <g fill="#0a0a0a">
+    <rect x="296" y="216" width="120" height="26" rx="6" />
+    <rect x="520" y="216" width="100" height="26" rx="6" />
+    <rect x="296" y="432" width="110" height="26" rx="6" />
+    <rect x="520" y="432" width="130" height="26" rx="6" />
+  </g>
+  <g fill="url(#accent)">
+    <rect x="296" y="258" width="48" height="10" rx="5" />
+    <rect x="520" y="258" width="48" height="10" rx="5" />
+    <rect x="296" y="474" width="48" height="10" rx="5" />
+    <rect x="520" y="474" width="48" height="10" rx="5" />
+  </g>
+
+  <!-- Chart card -->
+  <g filter="url(#shadow)">
+    <rect x="272" y="512" width="432" height="200" rx="14" fill="#ffffff" />
+  </g>
+  <rect x="296" y="536" width="120" height="14" rx="7" fill="#c7c9d1" />
+  <!-- Bars -->
+  <g>
+    <rect x="300" y="640" width="28" height="48" rx="6" fill="url(#bar)" />
+    <rect x="344" y="616" width="28" height="72" rx="6" fill="url(#bar)" />
+    <rect x="388" y="600" width="28" height="88" rx="6" fill="url(#bar)" />
+    <rect x="432" y="572" width="28" height="116" rx="6" fill="url(#bar)" />
+    <rect x="476" y="588" width="28" height="100" rx="6" fill="url(#bar)" />
+    <rect x="520" y="556" width="28" height="132" rx="6" fill="url(#bar)" />
+    <rect x="564" y="612" width="28" height="76" rx="6" fill="url(#bar)" />
+    <rect x="608" y="584" width="28" height="104" rx="6" fill="url(#bar)" />
+    <rect x="652" y="548" width="28" height="140" rx="6" fill="url(#bar)" />
+  </g>
+  <!-- Trend line -->
+  <polyline points="314,620 358,604 402,592 446,560 490,576 534,544 578,600 622,572 666,536"
+    fill="none" stroke="#4f46e5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.85" />
+
+  <!-- Right panel -->
+  <g filter="url(#shadow)">
+    <rect x="720" y="168" width="448" height="544" rx="14" fill="#ffffff" />
+  </g>
+  <rect x="744" y="192" width="140" height="14" rx="7" fill="#c7c9d1" />
+  <!-- Donut -->
+  <g transform="translate(944 360)">
+    <circle r="88" fill="none" stroke="#eef0f4" stroke-width="28" />
+    <circle r="88" fill="none" stroke="url(#accent)" stroke-width="28"
+      stroke-dasharray="415 553" stroke-linecap="round" transform="rotate(-90)" />
+    <rect x="-44" y="-12" width="88" height="24" rx="6" fill="#0a0a0a" />
+  </g>
+  <!-- Legend rows -->
+  <g>
+    <rect x="744" y="488" width="400" height="56" rx="12" fill="#f6f7fb" />
+    <rect x="744" y="560" width="400" height="56" rx="12" fill="#f6f7fb" />
+    <rect x="744" y="632" width="400" height="56" rx="12" fill="#f6f7fb" />
+    <circle cx="768" cy="516" r="8" fill="#4f46e5" />
+    <circle cx="768" cy="588" r="8" fill="#a5b4fc" />
+    <circle cx="768" cy="660" r="8" fill="#e0e0e6" />
+  </g>
+  <g fill="#0a0a0a">
+    <rect x="792" y="510" width="120" height="12" rx="6" />
+    <rect x="792" y="582" width="100" height="12" rx="6" />
+    <rect x="792" y="654" width="130" height="12" rx="6" />
+  </g>
+  <g fill="#c7c9d1">
+    <rect x="1080" y="510" width="48" height="12" rx="6" />
+    <rect x="1080" y="582" width="48" height="12" rx="6" />
+    <rect x="1080" y="654" width="48" height="12" rx="6" />
+  </g>
+</svg>

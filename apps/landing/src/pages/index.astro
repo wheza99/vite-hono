@@ -1,0 +1,58 @@
+---
+import DefaultLayout from "@/layouts/DefaultLayout.astro";
+import { THEME } from "@/styles/theme";
+---
+
+<DefaultLayout
+  title={THEME.tagline}
+  description={`${THEME.name} helps you streamline your workflow, collaborate with your team, and boost productivity.`}
+>
+  {/* ── M1 placeholder hero. The full homepage lands in Milestone 2. ── */}
+  <section class="bg-dot-grid relative overflow-hidden border-b">
+    <div
+      class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96 bg-gradient-to-b from-[color-mix(in_oklch,var(--primary)_8%,transparent)] to-transparent"
+    >
+    </div>
+    <div class="mx-auto flex max-w-4xl flex-col items-center px-6 py-28 text-center md:py-40">
+      <a
+        href="https://pabrikstartup.id"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="bg-background text-muted-foreground ring-border hover:ring-primary/40 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ring-1 transition"
+      >
+        <span class="size-1.5 rounded-full bg-primary"></span>
+        Backed by Pabrik Startup
+      </a>
+
+      <h1
+        class="text-accent mt-6 text-balance text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl"
+      >
+        {THEME.tagline}
+      </h1>
+
+      <p class="mt-6 max-w-2xl text-pretty text-lg text-muted-foreground">
+        Streamline your workflow, collaborate with your team, and boost
+        productivity with our innovative platform.
+      </p>
+
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <a
+          href={THEME.appUrl}
+          class="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-[var(--accent-hover)]"
+        >
+          Get Started
+        </a>
+        <a
+          href="/features"
+          class="border-border bg-background text-foreground hover:bg-muted inline-flex h-11 items-center justify-center rounded-lg border px-6 text-sm font-medium transition-colors"
+        >
+          View Features
+        </a>
+      </div>
+
+      <p class="mt-6 text-sm text-muted-foreground">
+        14-day free trial. No obligations.
+      </p>
+    </div>
+  </section>
+</DefaultLayout>
