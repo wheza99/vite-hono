@@ -4,3 +4,9 @@ dist
 .env.local
 .DS_Store
 pb_data/
+
+# Local coding-agent tooling/logs (not part of the template)
+pi_*.log
+landing_dev.log
+PI_M*.md
+run_pi_*.bat

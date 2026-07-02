@@ -12,7 +12,8 @@ Todos are the placeholder resource — clone this, replace todos with your real 
 | Backend  | Hono (Node), modular routes, Zod env validation          |
 | Database | PocketBase (auth, data, admin UI) — JS migrations        |
 | Billing  | Whop (USD subscription, checkout embed + webhook)        |
-| Deploy   | Docker Compose: Caddy (HTTPS) + PB + server + static web |
+| Marketing| Astro 6 static site (landing) — one-file rebrandable     |
+| Deploy   | Docker Compose: Caddy (HTTPS) + PB + server + web + landing |
 
 ## Structure
 
@@ -20,14 +21,28 @@ Todos are the placeholder resource — clone this, replace todos with your real 
 apps/
   web/        # @vite-hono/web — React SPA (shadcn ui + pattern atoms + swagger docs)
   server/     # @vite-hono/server — Hono API + PB proxy + billing + credits
+  landing/    # @vite-hono/landing — Astro marketing site (rebrand via src/styles/theme.ts)
 packages/
   shared/     # @vite-hono/shared — Zod schemas shared by web & server
 infra/
   pocketbase/ # PB Dockerfile + pb_migrations (schema as code)
-docker-compose.yml      # production: caddy + pb + server + web build
+docker-compose.yml      # production: caddy + pb + server + web + landing
 docker-compose.dev.yml  # dev: PocketBase only
-Caddyfile               # HTTPS + reverse proxy (/api → server, /pb → PB)
+Caddyfile               # subdomain HTTPS: apex → landing, app.* → web + /api + /pb
+PORT_REGISTRY.md        # local dev port assignments (slot 06)
 ```
+
+### Subdomain architecture (production)
+
+```
+yourdomain.com        → Landing (Astro static)
+app.yourdomain.com    → React web app (auth → dashboard)
+app.yourdomain.com/api → Hono server
+app.yourdomain.com/pb  → PocketBase proxy
+```
+
+The landing site is rebranded by editing **one file**: `apps/landing/src/styles/theme.ts`
+(name, accent color, domain, tagline). See `apps/landing/README.md`.
 
 ## Quick start (dev)
 
@@ -46,12 +61,18 @@ cp apps/server/.env.example apps/server/.env   # matches the credentials above
 
 # 4. Run web + server
 pnpm dev
+
+# 5. (Optional) Run the landing site
+pnpm --filter @vite-hono/landing dev
 ```
 
 - Web: http://localhost:5173
+- Landing: http://localhost:5206
 - API: http://localhost:3000/api/hello
 - PB Admin: http://localhost:8090/_/
 - PB via proxy: http://localhost:3000/pb/api/health
+
+> Local dev ports follow a per-project slot — see `PORT_REGISTRY.md` (default slot 06).
 
 ## Production (Docker)
 
@@ -60,7 +81,7 @@ cp .env.example .env   # set admin credentials, DOMAIN, Whop keys
 docker compose up -d
 ```
 
-Caddy serves the static web build, proxies `/api/*` to the Hono server and `/pb/*` to PocketBase, with automatic HTTPS for `DOMAIN`.
+Caddy serves the static **landing** build at `DOMAIN` and the static **web** build at `app.DOMAIN`, proxies `/api/*` to the Hono server and `/pb/*` to PocketBase, with automatic HTTPS for both hostnames.
 
 ## Architecture notes
 

@@ -1,3 +1,5 @@
+import type { ReactElement } from "react";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 /* ── Abstract "screen" mockups (accent + neutral tokens only) ──────────── */
@@ -136,7 +138,7 @@ interface TabItem {
   title: string;
   description: string;
   bullets: string[];
-  Mockup: () => JSX.Element;
+  Mockup: () => ReactElement;
 }
 
 const TABS: TabItem[] = [

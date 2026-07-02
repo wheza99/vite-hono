@@ -2,6 +2,8 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 
+import { THEME } from "./styles/theme";
+
 /**
  * Blog content collection.
  *
@@ -15,7 +17,8 @@ const blog = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string().optional(),
-    author: z.string().default("Your Startup"),
+    // Default author is the configured startup name so rebranding propagates.
+    author: z.string().default(THEME.name),
     date: z.coerce.date(),
     tags: z.array(z.string()).default([]),
     coverImage: z.string().optional(),
