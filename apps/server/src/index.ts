@@ -5,6 +5,7 @@ import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { env } from './env'
 import { pbProxyRoute } from './pb-proxy'
+import { authRoute } from './routes/auth'
 import { apikeysRoute } from './routes/apikeys'
 import { billingRoute, whopWebhookRoute } from './routes/billing'
 import { creditsRoute, transactionsRoute } from './routes/credits'
@@ -25,6 +26,7 @@ app.get('/api/me', userAuth, (c) => {
 })
 
 app.route('/pb', pbProxyRoute)
+app.route('/api/auth', authRoute)
 app.route('/api/todos', todosRoute)
 app.route('/api/keys', apikeysRoute)
 app.route('/api/billing', billingRoute)

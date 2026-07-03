@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth'
+import { Turnstile } from '@/components/turnstile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -7,46 +8,39 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Link, useNavigate } from 'react-router'
 
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY
+
 export function Register() {
   const { signUp, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // See Login.tsx for the single-use-token reset rationale.
+  const turnstileEnabled = !!TURNSTILE_SITE_KEY
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [turnstileKey, setTurnstileKey] = useState(0)
+
+  const canSubmit = !loading && (!turnstileEnabled || !!turnstileToken)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canSubmit) return
     setLoading(true)
     setError(null)
-    const { error } = await signUp(email, password)
+    // Backend register authenticates the new user immediately, so we land
+    // straight in the app (no email-confirmation step).
+    const { error } = await signUp(email, password, turnstileToken)
     if (error) {
       setError(error)
+      setTurnstileToken(null)
+      setTurnstileKey((k) => k + 1)
     } else {
-      setSuccess(true)
+      navigate('/todos', { replace: true })
     }
     setLoading(false)
-  }
-
-  if (success) {
-    return (
-      <div className="flex items-center justify-center min-h-[80vh]">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle>Cek Email! ✉️</CardTitle>
-            <CardDescription>
-              Kami udah kirim link konfirmasi ke email kamu. Cek inbox (dan spam folder).
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link to="/login">
-              <Button className="w-full" variant="outline">Ke halaman Login</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    )
   }
 
   return (
@@ -86,7 +80,16 @@ export function Register() {
                 minLength={6}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            {turnstileEnabled && (
+              <Turnstile
+                key={turnstileKey}
+                siteKey={TURNSTILE_SITE_KEY}
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+              />
+            )}
+            <Button type="submit" className="w-full" disabled={!canSubmit}>
               {loading ? 'Mendaftar...' : 'Daftar'}
             </Button>
           </form>

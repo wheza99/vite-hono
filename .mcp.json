@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "vite-hono-mcp": {
+      "type": "http",
+      "url": "http://localhost:5300/mcp"
+    }
+  }
+}
