@@ -2,6 +2,10 @@ services:
   pocketbase:
     build: ./infra/pocketbase
     container_name: 00-vitehono-pb-dev
+    environment:
+      # Local dev Google OAuth2 provider sync (pb_hooks/google-oauth.pb.js).
+      - GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET:-}
     ports:
       - "127.0.0.1:${PB_PORT:-9000}:8090"
     volumes:

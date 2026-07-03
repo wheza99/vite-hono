@@ -12,8 +12,8 @@ interface PBUser {
 interface AuthContextType {
   user: PBUser | null
   loading: boolean
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>
+  signUp: (email: string, password: string, turnstileToken: string | null) => Promise<{ error: string | null }>
+  signIn: (email: string, password: string, turnstileToken: string | null) => Promise<{ error: string | null }>
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -49,39 +49,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const signUp = async (email: string, password: string) => {
+  // Email/password go through the backend (/api/auth/*) so the Turnstile check
+  // is enforced server-side — a client can't skip the widget and hit PocketBase
+  // directly. The backend returns { token, record }; we persist it to the SDK's
+  // authStore, which the onChange listener above picks up.
+  const signUp = async (email: string, password: string, turnstileToken: string | null) => {
     try {
-      await pb.collection('users').create({
-        email,
-        password,
-        passwordConfirm: password,
-        name: email.split('@')[0],
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, turnstileToken }),
       })
-      // Auto-login after signup
-      await pb.collection('users').authWithPassword(email, password)
+      const data = await res.json()
+      if (!res.ok) return { error: data?.error || 'Registration failed' }
+      pb.authStore.save(data.token, data.record)
       return { error: null }
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || 'Registration failed'
-      return { error: message }
+    } catch {
+      return { error: 'Network error. Please try again.' }
     }
   }
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, turnstileToken: string | null) => {
     try {
-      await pb.collection('users').authWithPassword(email, password)
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, turnstileToken }),
+      })
+      const data = await res.json()
+      if (!res.ok) return { error: data?.error || 'Login failed' }
+      pb.authStore.save(data.token, data.record)
       return { error: null }
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || 'Login failed'
-      return { error: message }
+    } catch {
+      return { error: 'Network error. Please try again.' }
     }
   }
 
+  // Google OAuth2 stays a direct browser→PocketBase popup flow (no backend
+  // round-trip, no Turnstile — Google has its own bot protection and Turnstile
+  // can't run inside a cross-origin OAuth popup).
   const signInWithGoogle = async () => {
-    const authData = await pb.collection('users').authWithOAuth2({
+    await pb.collection('users').authWithOAuth2({
       provider: 'google',
       scopes: ['email', 'profile'],
     })
-    // Force update user state immediately
     setUser(getCurrentUser())
   }
 

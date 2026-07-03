@@ -9,6 +9,9 @@ COPY apps/web/package.json apps/web/
 RUN pnpm install --frozen-lockfile --filter @vite-hono/web --filter @vite-hono/shared
 COPY packages/shared packages/shared
 COPY apps/web apps/web
+# Vite bakes VITE_* into the bundle at build time — pass as build args, not runtime env.
+ARG VITE_TURNSTILE_SITE_KEY
+ENV VITE_TURNSTILE_SITE_KEY=$VITE_TURNSTILE_SITE_KEY
 RUN pnpm --filter @vite-hono/web build
 
 FROM nginx:alpine

@@ -2,6 +2,11 @@ services:
   pocketbase:
     build: ./infra/pocketbase
     container_name: 00-vitehono-pb
+    environment:
+      # Synced onto the users collection on every boot by
+      # infra/pocketbase/pb_hooks/google-oauth.pb.js.
+      - GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${VITE_GOOGLE_CLIENT_SECRET:-}
     volumes:
       - ./pb_data:/pb/pb_data
     restart: unless-stopped
@@ -21,6 +26,7 @@ services:
       - WHOP_COMPANY_ID=${WHOP_COMPANY_ID:-}
       - WHOP_ACCESS_PASS_ID=${WHOP_ACCESS_PASS_ID:-}
       - WHOP_WEBHOOK_SECRET=${WHOP_WEBHOOK_SECRET:-}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-}
       - CORS_ORIGIN=${CORS_ORIGIN:-}
     depends_on:
       - pocketbase
@@ -33,6 +39,10 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        # Vite bakes VITE_* into the bundle at BUILD time — they must be build
+        # args, not runtime env (a static bundle never sees runtime env).
+        - VITE_TURNSTILE_SITE_KEY=${VITE_TURNSTILE_SITE_KEY:-}
     container_name: 00-vitehono-web
     depends_on:
       - server

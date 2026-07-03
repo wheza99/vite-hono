@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router'
 import { useAuth } from '@/lib/auth'
+import { Turnstile } from '@/components/turnstile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY
 
 export function Login() {
   const { signIn, signInWithGoogle } = useAuth()
@@ -15,13 +18,25 @@ export function Login() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  // Turnstile: gate the submit button on a verified token, and reset it after
+  // any failure — tokens are single-use, so retrying with a burned token fails
+  // even with correct credentials. Bumping the key remounts a fresh widget.
+  const turnstileEnabled = !!TURNSTILE_SITE_KEY
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [turnstileKey, setTurnstileKey] = useState(0)
+
+  const canSubmit = !loading && (!turnstileEnabled || !!turnstileToken)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canSubmit) return
     setLoading(true)
     setError(null)
-    const { error } = await signIn(email, password)
+    const { error } = await signIn(email, password, turnstileToken)
     if (error) {
       setError(error)
+      setTurnstileToken(null)
+      setTurnstileKey((k) => k + 1)
     } else {
       navigate('/todos', { replace: true })
     }
@@ -76,7 +91,16 @@ export function Login() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            {turnstileEnabled && (
+              <Turnstile
+                key={turnstileKey}
+                siteKey={TURNSTILE_SITE_KEY}
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+              />
+            )}
+            <Button type="submit" className="w-full" disabled={!canSubmit}>
               {loading ? 'Masuk...' : 'Masuk'}
             </Button>
           </form>
