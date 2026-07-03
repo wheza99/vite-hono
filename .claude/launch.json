@@ -2,10 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "landing",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@vite-hono/landing", "dev"],
+      "port": 5200
+    },
+    {
       "name": "web",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@vite-hono/web", "dev"],
-      "port": 5173,
+      "port": 5100,
       "autoPort": true
     },
     {
@@ -15,10 +21,16 @@
       "port": 3000
     },
     {
+      "name": "mcp",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@vite-hono/mcp", "dev"],
+      "port": 5300
+    },
+    {
       "name": "pocketbase",
       "runtimeExecutable": "docker",
       "runtimeArgs": ["compose", "-f", "docker-compose.dev.yml", "up"],
-      "port": 8090
+      "port": 9000
     }
   ]
 }

@@ -1,68 +1,68 @@
 services:
-  caddy:
-    image: caddy:2-alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      - DOMAIN=${DOMAIN:-localhost}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - web_dist:/srv/web:ro
-      - landing_dist:/srv/landing:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - server
-      - pocketbase
-      - web
-      - landing
-    restart: unless-stopped
-
   pocketbase:
     build: ./infra/pocketbase
+    container_name: 00-vitehono-pb
     volumes:
       - ./pb_data:/pb/pb_data
     restart: unless-stopped
+    networks: [default]
 
   server:
     build:
       context: .
       dockerfile: apps/server/Dockerfile
+    container_name: 00-vitehono-server
     environment:
       - PORT=3000
-      - POCKETBASE_URL=http://pocketbase:8090
+      - POCKETBASE_URL=http://00-vitehono-pb:8090
       - POCKETBASE_ADMIN_EMAIL=${POCKETBASE_ADMIN_EMAIL}
       - POCKETBASE_ADMIN_PASSWORD=${POCKETBASE_ADMIN_PASSWORD}
       - WHOP_API_KEY=${WHOP_API_KEY:-}
       - WHOP_COMPANY_ID=${WHOP_COMPANY_ID:-}
       - WHOP_ACCESS_PASS_ID=${WHOP_ACCESS_PASS_ID:-}
       - WHOP_WEBHOOK_SECRET=${WHOP_WEBHOOK_SECRET:-}
-      - CORS_ORIGIN=${CORS_ORIGIN:-https://${DOMAIN:-localhost}}
+      - CORS_ORIGIN=${CORS_ORIGIN:-}
     depends_on:
       - pocketbase
     restart: unless-stopped
+    networks: [default, npm-network]
 
-  # Builds the static web bundle and copies it into the shared volume
+  # Web SPA — nginx baked into the image, serves dist + proxies /api and /pb
+  # to the server container (see apps/web/nginx.conf).
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    volumes:
-      - web_dist:/out
-    restart: "no"
+    container_name: 00-vitehono-web
+    depends_on:
+      - server
+    restart: unless-stopped
+    networks: [default, npm-network]
 
-  # Builds the static Astro landing bundle and copies it into the shared volume
+  # Static Astro landing — nginx on :80; NPM routes the apex domain here.
   landing:
     build:
       context: .
       dockerfile: apps/landing/Dockerfile
-    volumes:
-      - landing_dist:/out
-    restart: "no"
+    container_name: 00-vitehono-landing
+    restart: unless-stopped
+    networks: [default, npm-network]
 
-volumes:
-  web_dist:
-  landing_dist:
-  caddy_data:
-  caddy_config:
+  # Skybridge MCP app (tools + views for ChatGPT/Claude hosts) — Node 24 image.
+  # NPM routes mcp.{domain} → 00-vitehono-mcp:3000 (MCP endpoint at /mcp).
+  mcp:
+    build:
+      context: .
+      dockerfile: apps/mcp/Dockerfile
+    container_name: 00-vitehono-mcp
+    environment:
+      - PORT=3000
+    restart: unless-stopped
+    networks: [default, npm-network]
+
+networks:
+  default:
+    name: vitehono_default
+  npm-network:
+    name: nginx-proxy-manager_default
+    external: true
