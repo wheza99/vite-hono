@@ -11,7 +11,7 @@ const EnvSchema = z.object({
   WHOP_ACCESS_PASS_ID: z.string().optional(),
   WHOP_WEBHOOK_SECRET: z.string().optional(),
   TURNSTILE_SECRET_KEY: z.string().optional(),
-  CORS_ORIGIN: z.string().default('http://localhost:5100'),
+  CORS_ORIGIN: z.string().default('http://localhost:2000'),
 })
 
 export type Env = z.infer<typeof EnvSchema>

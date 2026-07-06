@@ -5,7 +5,7 @@
   "description": "Skybridge MCP app — tools + interactive views for AI hosts (ChatGPT / Claude)",
   "type": "module",
   "scripts": {
-    "dev": "skybridge dev -p 5300 --no-open",
+    "dev": "skybridge dev -p 4000 --no-open",
     "build": "skybridge build",
     "start": "skybridge start -p 3000",
     "typecheck": "tsc --noEmit",
