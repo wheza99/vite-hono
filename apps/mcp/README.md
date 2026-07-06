@@ -14,11 +14,11 @@ MCP server + interactive React views yang berjalan di dalam AI hosts (ChatGPT ap
 pnpm --filter @vite-hono/mcp dev   # atau: pnpm dev:mcp dari root
 ```
 
-- MCP endpoint: `http://localhost:5300/mcp` (slot 00 = template; ganti `53<slot>` sesuai slot project)
-- DevTools: `http://localhost:5300/`
-- Playground (chat dengan LLM yang memanggil tools): `http://localhost:5300/try`
+- MCP endpoint: `http://localhost:4000/mcp` (slot 000 = template; ganti `4<slot>` sesuai slot project)
+- DevTools: `http://localhost:4000/`
+- Playground (chat dengan LLM yang memanggil tools): `http://localhost:4000/try`
 
-Test dari Claude Code: daftarkan di `.mcp.json` dengan `{"type": "http", "url": "http://localhost:5300/mcp"}` (sudah ada di root template).
+Test dari Claude Code: daftarkan di `.mcp.json` dengan `{"type": "http", "url": "http://localhost:4000/mcp"}` (sudah ada di root template).
 
 ## Deploy
 

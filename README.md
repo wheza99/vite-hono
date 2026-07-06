@@ -72,9 +72,9 @@ pnpm dev
 pnpm --filter @vite-hono/landing dev
 ```
 
-- Web: http://localhost:5100
-- Landing: http://localhost:5200
-- MCP app (Skybridge, butuh Node ≥24): http://localhost:5300 — `pnpm dev:mcp`
+- Web: http://localhost:2000
+- Landing: http://localhost:1000
+- MCP app (Skybridge, butuh Node ≥24): http://localhost:4000 — `pnpm dev:mcp`
 - API: http://localhost:3000/api/hello
 - PB Admin: http://localhost:9000/_/
 - PB via proxy: http://localhost:3000/pb/api/health

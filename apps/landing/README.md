@@ -6,9 +6,9 @@ The marketing/landing app of the vite-hono template. Static-generated with
 single file**.
 
 ```text
-yourdomain.com      → this app (Astro static)   [dev port 5206]
-app.yourdomain.com  → apps/web  (React dashboard)[dev port 5106]
-app.yourdomain.com/api → apps/server (Hono)      [port 3006]
+yourdomain.com      → this app (Astro static)   [dev port 1000]
+app.yourdomain.com  → apps/web  (React dashboard)[dev port 2000]
+app.yourdomain.com/api → apps/server (Hono)      [port 3000]
 ```
 
 ---
