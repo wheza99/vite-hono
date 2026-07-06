@@ -33,7 +33,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: Number(process.env.PORT) || 5100,
+    port: Number(process.env.PORT) || 2000,
     proxy: {
       '/api/': 'http://localhost:3000',
       '/pb/': 'http://localhost:3000',

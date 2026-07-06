@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev --port 5200",
+    "dev": "astro dev --port 1000",
     "build": "astro build",
-    "preview": "astro preview --port 5200",
+    "preview": "astro preview --port 1000",
     "typecheck": "astro check"
   },
   "dependencies": {

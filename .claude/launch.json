@@ -5,14 +5,13 @@
       "name": "landing",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@vite-hono/landing", "dev"],
-      "port": 5200
+      "port": 1000
     },
     {
       "name": "web",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@vite-hono/web", "dev"],
-      "port": 5100,
-      "autoPort": true
+      "port": 2000
     },
     {
       "name": "server",
@@ -24,7 +23,7 @@
       "name": "mcp",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@vite-hono/mcp", "dev"],
-      "port": 5300
+      "port": 4000
     },
     {
       "name": "pocketbase",
